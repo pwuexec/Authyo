@@ -1,0 +1,34 @@
+@Authy.Presentation_HostAddress = http://localhost:5238
+
+### Create Organization (Platform Owner only)
+POST {{Authy.Presentation_HostAddress}}/organizations
+Content-Type: application/json
+
+{
+  "name": "Acme Corporation",
+  "allowSelfRegistration": true,
+  "adminEmail": "admin@acme.com",
+  "adminPassword": "SecurePassword123!"
+}
+
+### Get Organization
+GET {{Authy.Presentation_HostAddress}}/organizations/{{orgId}}
+Accept: application/json
+
+### Create User in Organization
+POST {{Authy.Presentation_HostAddress}}/organizations/{{orgId}}/users
+Content-Type: application/json
+
+{
+  "email": "user@acme.com",
+  "password": "UserPassword123!",
+  "role": "member"
+}
+
+### List Users in Organization
+GET {{Authy.Presentation_HostAddress}}/organizations/{{orgId}}/users
+Accept: application/json
+
+### Get Specific User
+GET {{Authy.Presentation_HostAddress}}/organizations/{{orgId}}/users/{{userId}}
+Accept: application/json
