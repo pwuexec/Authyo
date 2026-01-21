@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(dotnet restore:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(git -C \"C:\\\\Users\\\\pwuexec\\\\RiderProjects\\\\Authy\\\\Authy\" show f0fb6b8:Authy.Presentation/Program.cs)"
     ]
   }
 }
