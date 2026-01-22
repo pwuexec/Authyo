@@ -1,18 +1,9 @@
 using Authy.Presentation.Shared.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
-using System.Linq;
 
 namespace Authy.Presentation.Shared;
 
-public class Dispatcher : IDispatcher
+public class Dispatcher(IServiceProvider serviceProvider) : IDispatcher
 {
-    private readonly IServiceProvider _serviceProvider;
-
-    public Dispatcher(IServiceProvider serviceProvider)
-    {
-        _serviceProvider = serviceProvider;
-    }
-
     public async Task<TResult> DispatchAsync<TResult>(ICommand<TResult> command, CancellationToken cancellationToken)
     {
         var commandType = command.GetType();
@@ -20,11 +11,11 @@ public class Dispatcher : IDispatcher
         
         // Resolve handler
         var handlerType = typeof(ICommandHandler<,>).MakeGenericType(commandType, resultType);
-        var handler = _serviceProvider.GetRequiredService(handlerType);
+        var handler = serviceProvider.GetRequiredService(handlerType);
 
         // Resolve behaviors
         var behaviorType = typeof(IPipelineBehavior<,>).MakeGenericType(commandType, resultType);
-        var behaviors = _serviceProvider.GetServices(behaviorType).Cast<object>().ToList();
+        var behaviors = serviceProvider.GetServices(behaviorType).Cast<object>().ToList();
 
         // Create the handler delegate
         RequestHandlerDelegate<TResult> handlerDelegate = () =>

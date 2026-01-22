@@ -1,4 +1,3 @@
-using Authy.Presentation.Domain;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
 
@@ -6,22 +5,14 @@ namespace Authy.Presentation.Domain.Roles;
 
 public record CreateRoleCommand(Guid OrganizationId, string Name, Guid UserId) : ICommand<Result<Role>>;
 
-public class CreateRoleCommandHandler : ICommandHandler<CreateRoleCommand, Result<Role>>
+public class CreateRoleCommandHandler(
+    IAuthorizationService authorizationService,
+    IRoleRepository roleRepository)
+    : ICommandHandler<CreateRoleCommand, Result<Role>>
 {
-    private readonly IAuthorizationService _authorizationService;
-    private readonly IRoleRepository _roleRepository;
-
-    public CreateRoleCommandHandler(
-        IAuthorizationService authorizationService,
-        IRoleRepository roleRepository)
-    {
-        _authorizationService = authorizationService;
-        _roleRepository = roleRepository;
-    }
-
     public async Task<Result<Role>> HandleAsync(CreateRoleCommand command, CancellationToken cancellationToken)
     {
-        var authResult = await _authorizationService.EnsureRootIpOrOwnerAsync(
+        var authResult = await authorizationService.EnsureRootIpOrOwnerAsync(
             command.OrganizationId, 
             command.UserId, 
             cancellationToken);
@@ -38,7 +29,7 @@ public class CreateRoleCommandHandler : ICommandHandler<CreateRoleCommand, Resul
             OrganizationId = command.OrganizationId
         };
 
-        await _roleRepository.AddAsync(role, cancellationToken);
+        await roleRepository.AddAsync(role, cancellationToken);
 
         return Result.Success(role);
     }

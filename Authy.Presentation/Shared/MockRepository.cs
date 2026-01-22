@@ -1,3 +1,7 @@
+using Authy.Presentation.Domain;
+using Authy.Presentation.Domain.Organizations;
+using Authy.Presentation.Domain.Roles;
+using Authy.Presentation.Domain.Scopes;
 using Authy.Presentation.Shared.Abstractions;
 
 namespace Authy.Presentation.Shared;
@@ -8,9 +12,9 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
     {
         new Organization 
         { 
-            Id = Guid.Parse("00000000-0000-0000-0000-000000000001"), 
+            Id = Guid.Parse("31052a63-0ade-4b14-bada-1ea2fc1ae40a"), 
             Name = "Test Org",
-            Owners = new List<User> { new User { Id = Guid.Parse("00000000-0000-0000-0000-000000000002") } }
+            Owners = new List<User> { new() { Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e") } }
         }
     };
 
@@ -42,8 +46,6 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
-        // For mock, we'll just log or assume it's "saved"
-        Console.WriteLine("Changes saved to database.");
         return Task.CompletedTask;
     }
 }

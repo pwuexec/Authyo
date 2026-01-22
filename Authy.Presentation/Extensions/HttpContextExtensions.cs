@@ -1,5 +1,4 @@
 using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Organizations;
 using Authy.Presentation.Shared;
 
 namespace Authy.Presentation.Extensions;

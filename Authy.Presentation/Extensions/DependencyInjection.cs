@@ -1,6 +1,5 @@
 using System.Reflection;
 using Authy.Presentation.Shared.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Authy.Presentation.Extensions;
 

@@ -5,31 +5,21 @@ using Authy.Presentation.Shared.Abstractions;
 
 namespace Authy.Presentation.Shared;
 
-public class AuthorizationService : IAuthorizationService
+public class AuthorizationService(
+    IHttpContextAccessor httpContextAccessor,
+    IConfiguration configuration,
+    IOrganizationRepository organizationRepository)
+    : IAuthorizationService
 {
-    private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IConfiguration _configuration;
-    private readonly IOrganizationRepository _organizationRepository;
-
-    public AuthorizationService(
-        IHttpContextAccessor httpContextAccessor,
-        IConfiguration configuration,
-        IOrganizationRepository organizationRepository)
-    {
-        _httpContextAccessor = httpContextAccessor;
-        _configuration = configuration;
-        _organizationRepository = organizationRepository;
-    }
-
     public async Task<Result> EnsureRootIpOrOwnerAsync(Guid organizationId, Guid userId, CancellationToken cancellationToken)
     {
-        var authResult = _httpContextAccessor.HttpContext.EnsureRootIp(_configuration);
+        var authResult = httpContextAccessor.HttpContext.EnsureRootIp(configuration);
         if (authResult.IsSuccess)
         {
             return Result.Success();
         }
 
-        var org = await _organizationRepository.GetByIdAsync(organizationId, cancellationToken);
+        var org = await organizationRepository.GetByIdAsync(organizationId, cancellationToken);
         if (org == null || !org.Owners.Any(o => o.Id == userId))
         {
             return Result.Failure(DomainErrors.User.UnauthorizedOwner);

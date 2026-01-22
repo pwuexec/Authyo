@@ -1,5 +1,3 @@
-using Authy.Presentation.Shared;
-
 namespace Authy.Presentation.Shared.Abstractions;
 
 public interface ICommandHandler<in TCommand, TResult>
