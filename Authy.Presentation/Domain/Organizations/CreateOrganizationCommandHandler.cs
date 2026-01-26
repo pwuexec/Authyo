@@ -22,7 +22,7 @@ public class CreateOrganizationCommandHandler(
 
         var org = new Organization
         {
-            Id = Guid.NewGuid(),
+            Id = Guid.CreateVersion7(),
             Name = command.Name
         };
 

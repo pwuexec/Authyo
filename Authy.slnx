@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="Authy.Benchmarks/Authy.Benchmarks.csproj" />
   <Project Path="Authy.Presentation/Authy.Presentation.csproj" />
+  <Project Path="Authy.Tests/Authy.Tests.csproj" />
 </Solution>
