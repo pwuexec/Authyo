@@ -1,8 +1,4 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Organizations;
-using Authy.Presentation.Domain.Roles;
-using Authy.Presentation.Domain.Scopes;
-using Authy.Presentation.Domain.Users;
+using Authy.Presentation.Entitites;
 using Microsoft.EntityFrameworkCore;
 
 namespace Authy.Presentation.Persistence;
@@ -17,6 +13,7 @@ public class AuthyDbContext : DbContext
     public DbSet<Role> Roles { get; set; }
     public DbSet<Scope> Scopes { get; set; }
     public DbSet<Organization> Organizations { get; set; }
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

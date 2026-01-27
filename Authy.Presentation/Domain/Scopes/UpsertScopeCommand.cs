@@ -1,6 +1,7 @@
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
-using Authy.Presentation.Domain;
+using Authy.Presentation.Domain.Scopes.Data;
+using Authy.Presentation.Entitites;
 
 namespace Authy.Presentation.Domain.Scopes;
 

@@ -17,6 +17,10 @@ public static class DomainErrors
         public static readonly Error NotFound = new(
             "User.NotFound",
             "User not found");
+
+        public static readonly Error Unauthorized = new(
+            "User.Unauthorized",
+            "User is not authorized");
     }
 
     public static class Role
@@ -42,5 +46,35 @@ public static class DomainErrors
         public static readonly Error NameEmpty = new(
             "Organization.NameEmpty",
             "Organization name cannot be empty");
+    }
+
+    public static class RefreshToken
+    {
+        public static readonly Error NotFound = new(
+            "RefreshToken.NotFound",
+            "Refresh token not found");
+
+        public static readonly Error Invalid = new(
+            "RefreshToken.Invalid",
+            "Invalid refresh token");
+
+        public static readonly Error Revoked = new(
+            "RefreshToken.Revoked",
+            "Refresh token has been revoked");
+
+        public static readonly Error Expired = new(
+            "RefreshToken.Expired",
+            "Refresh token has expired");
+
+        public static readonly Error Mismatch = new(
+            "RefreshToken.Mismatch",
+            "Refresh token does not match the access token");
+    }
+
+    public static class AccessToken
+    {
+        public static readonly Error Invalid = new(
+            "AccessToken.Invalid",
+            "Invalid access token format");
     }
 }

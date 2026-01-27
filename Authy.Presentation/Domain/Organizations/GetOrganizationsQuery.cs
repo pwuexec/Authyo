@@ -1,4 +1,4 @@
-using Authy.Presentation.Domain.Organizations;
+using Authy.Presentation.Domain.Organizations.Data;
 using Authy.Presentation.Extensions;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;

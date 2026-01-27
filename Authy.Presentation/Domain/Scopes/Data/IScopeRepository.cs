@@ -1,4 +1,6 @@
-namespace Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Entitites;
+
+namespace Authy.Presentation.Domain.Scopes.Data;
 
 public interface IScopeRepository
 {

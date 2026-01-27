@@ -1,6 +1,6 @@
 using Authy.Presentation.Domain;
 using Authy.Presentation.Domain.Roles;
-using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Persistence.Repositories;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
@@ -65,18 +65,17 @@ public class GetRolesQueryHandlerTests : TestBase
         const string scopeName = "test-scope";
         
         var orgId = Guid.NewGuid();
-        var scope = new Scope { Id = Guid.NewGuid(), Name = scopeName, OrganizationId = orgId };
+        var scope = new Scope { Name = scopeName, OrganizationId = orgId };
         var role = new Role 
         { 
-            Id = Guid.NewGuid(), 
             Name = roleName, 
             OrganizationId = orgId,
             Scopes = new List<Scope> { scope }
         };
 
-        await DbContext.Scopes.AddAsync(scope);
-        await DbContext.Roles.AddAsync(role);
-        await DbContext.SaveChangesAsync();
+        await DbContext.Scopes.AddAsync(scope, TestContext.CancellationToken);
+        await DbContext.Roles.AddAsync(role, TestContext.CancellationToken);
+        await DbContext.SaveChangesAsync(TestContext.CancellationToken);
 
         var query = new GetRolesQuery(orgId, Guid.NewGuid());
         

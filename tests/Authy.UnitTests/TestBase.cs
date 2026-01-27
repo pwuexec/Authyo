@@ -1,6 +1,6 @@
 using Authy.Presentation.Persistence;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Authy.UnitTests;
 
@@ -8,7 +8,10 @@ namespace Authy.UnitTests;
 public abstract class TestBase
 {
     protected AuthyDbContext DbContext { get; private set; } = null!;
+    protected FakeTimeProvider TimeProvider { get; private set; } = new();
     protected CancellationToken CancellationToken => CancellationToken.None;
+
+    public TestContext TestContext { get; set; }
 
     [TestInitialize]
     public virtual void Setup()

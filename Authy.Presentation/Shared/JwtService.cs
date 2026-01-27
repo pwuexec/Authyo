@@ -8,7 +8,7 @@ namespace Authy.Presentation.Shared;
 
 public class JwtService(IConfiguration configuration) : IJwtService
 {
-    public string GenerateToken(Guid userId, string userName, List<string> scopes)
+    public (string Token, string Jti) GenerateToken(Guid userId, string userName, List<string> scopes)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -35,6 +35,9 @@ public class JwtService(IConfiguration configuration) : IJwtService
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler().WriteToken(token);
+        var jti = claims.First(c => c.Type == JwtRegisteredClaimNames.Jti).Value;
+        var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
+
+        return (tokenString, jti);
     }
 }

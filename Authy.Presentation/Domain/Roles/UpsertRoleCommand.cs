@@ -1,4 +1,6 @@
-using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Domain.Roles.Data;
+using Authy.Presentation.Domain.Scopes.Data;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
 

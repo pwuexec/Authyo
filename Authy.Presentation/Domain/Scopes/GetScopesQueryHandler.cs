@@ -1,3 +1,4 @@
+using Authy.Presentation.Domain.Scopes.Data;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
 

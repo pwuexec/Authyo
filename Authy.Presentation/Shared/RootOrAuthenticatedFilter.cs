@@ -1,6 +1,4 @@
 using Authy.Presentation.Extensions;
-using Microsoft.AspNetCore.Http;
-using System.Security.Claims;
 
 namespace Authy.Presentation.Shared;
 

@@ -1,4 +1,6 @@
-namespace Authy.Presentation.Domain.Users;
+using Authy.Presentation.Entitites;
+
+namespace Authy.Presentation.Domain.Users.Data;
 
 public interface IUserRepository
 {

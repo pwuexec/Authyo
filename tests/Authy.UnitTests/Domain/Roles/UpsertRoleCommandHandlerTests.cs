@@ -1,6 +1,6 @@
 using Authy.Presentation.Domain;
 using Authy.Presentation.Domain.Roles;
-using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Persistence.Repositories;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
@@ -74,8 +74,8 @@ public class UpsertRoleCommandHandlerTests : TestBase
         var scope = new Scope { Id = Guid.NewGuid(), Name = existingScopeName, OrganizationId = orgId };
         
         // Seed Scope
-        await DbContext.Scopes.AddAsync(scope);
-        await DbContext.SaveChangesAsync();
+        await DbContext.Scopes.AddAsync(scope, TestContext.CancellationToken);
+        await DbContext.SaveChangesAsync(TestContext.CancellationToken);
 
         var command = new UpsertRoleCommand(orgId, newRoleName, new List<string> { existingScopeName }, Guid.NewGuid());
         
@@ -89,7 +89,7 @@ public class UpsertRoleCommandHandlerTests : TestBase
         Assert.IsTrue(result.IsSuccess);
         
         // Verify DB State
-        var roleInDb = await DbContext.Roles.Include(r => r.Scopes).FirstOrDefaultAsync(r => r.Name == newRoleName && r.OrganizationId == orgId);
+        var roleInDb = await DbContext.Roles.Include(r => r.Scopes).FirstOrDefaultAsync(r => r.Name == newRoleName && r.OrganizationId == orgId, TestContext.CancellationToken);
         Assert.IsNotNull(roleInDb);
         Assert.HasCount(1, roleInDb.Scopes);
         Assert.AreEqual(existingScopeName, roleInDb.Scopes.First().Name);

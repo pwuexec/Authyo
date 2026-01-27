@@ -1,6 +1,6 @@
 using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Roles;
 using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Persistence.Repositories;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
@@ -67,13 +67,11 @@ public class GetScopesQueryHandlerTests : TestBase
         var orgId = Guid.NewGuid();
         var scope = new Scope 
         { 
-            Id = Guid.NewGuid(), 
             Name = scopeName, 
             OrganizationId = orgId 
         };
         var role = new Role 
         { 
-            Id = Guid.NewGuid(), 
             Name = roleName, 
             OrganizationId = orgId,
             Scopes = new List<Scope> { scope }
@@ -81,8 +79,8 @@ public class GetScopesQueryHandlerTests : TestBase
 
         // Note: EF Core handles many-to-many. 
         // Adding role with scopes should persist relationship.
-        await DbContext.Roles.AddAsync(role);
-        await DbContext.SaveChangesAsync();
+        await DbContext.Roles.AddAsync(role, TestContext.CancellationToken);
+        await DbContext.SaveChangesAsync(TestContext.CancellationToken);
 
         var query = new GetScopesQuery(orgId, Guid.NewGuid());
         

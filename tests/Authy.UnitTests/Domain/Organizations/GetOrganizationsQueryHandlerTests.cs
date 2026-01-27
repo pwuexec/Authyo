@@ -1,8 +1,7 @@
 using Authy.Presentation.Domain;
 using Authy.Presentation.Domain.Organizations;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Persistence.Repositories;
-using Authy.Presentation.Shared;
-using Authy.Presentation.Shared.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
@@ -45,8 +44,13 @@ public class GetOrganizationsQueryHandlerTests : TestBase
         const string unauthorizedIp = "10.0.0.1";
         var query = new GetOrganizationsQuery();
         
-        var httpContext = new DefaultHttpContext();
-        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(unauthorizedIp);
+        var httpContext = new DefaultHttpContext
+        {
+            Connection =
+            {
+                RemoteIpAddress = System.Net.IPAddress.Parse(unauthorizedIp)
+            }
+        };
         _httpContextAccessor.HttpContext.Returns(httpContext);
 
         // Act
@@ -64,8 +68,13 @@ public class GetOrganizationsQueryHandlerTests : TestBase
         const string localIp = "127.0.0.1";
         var query = new GetOrganizationsQuery();
         
-        var httpContext = new DefaultHttpContext();
-        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(localIp);
+        var httpContext = new DefaultHttpContext
+        {
+            Connection =
+            {
+                RemoteIpAddress = System.Net.IPAddress.Parse(localIp)
+            }
+        };
         _httpContextAccessor.HttpContext.Returns(httpContext);
 
         // Act
@@ -85,15 +94,20 @@ public class GetOrganizationsQueryHandlerTests : TestBase
         const string localIp = "127.0.0.1";
         
         await DbContext.Organizations.AddRangeAsync(
-            new Organization { Id = Guid.NewGuid(), Name = orgName1 },
-            new Organization { Id = Guid.NewGuid(), Name = orgName2 }
+            new Organization { Name = orgName1 },
+            new Organization { Name = orgName2 }
         );
-        await DbContext.SaveChangesAsync();
+        await DbContext.SaveChangesAsync(TestContext.CancellationToken);
 
         var query = new GetOrganizationsQuery();
         
-        var httpContext = new DefaultHttpContext();
-        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(localIp);
+        var httpContext = new DefaultHttpContext
+        {
+            Connection =
+            {
+                RemoteIpAddress = System.Net.IPAddress.Parse(localIp)
+            }
+        };
         _httpContextAccessor.HttpContext.Returns(httpContext);
 
         // Act

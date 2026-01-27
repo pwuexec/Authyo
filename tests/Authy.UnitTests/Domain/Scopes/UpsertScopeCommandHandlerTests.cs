@@ -1,5 +1,6 @@
 using Authy.Presentation.Domain;
 using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Persistence.Repositories;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
@@ -28,7 +29,7 @@ public class UpsertScopeCommandHandlerTests : TestBase
     {
         // Arrange
         var command = new UpsertScopeCommand(Guid.NewGuid(), "", Guid.NewGuid(), new UpsertScopeFields(""));
-        
+
         // Mock auth success to ensure we reach validation (if applicable)
         _authorizationService.EnsureRootIpOrOwnerAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
@@ -40,14 +41,14 @@ public class UpsertScopeCommandHandlerTests : TestBase
         Assert.IsTrue(result.IsFailure);
         Assert.AreEqual(DomainErrors.Scope.NameEmpty, result.Error);
     }
-    
+
     [TestMethod]
     public async Task HandleAsync_Should_ReturnFailure_When_UserIsNotAuthorized()
     {
         // Arrange
         const string scopeArg = "scope";
         var command = new UpsertScopeCommand(Guid.NewGuid(), scopeArg, Guid.NewGuid(), new UpsertScopeFields(scopeArg));
-        
+
         _authorizationService.EnsureRootIpOrOwnerAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result.Failure(DomainErrors.User.UnauthorizedOwner));
 
@@ -64,8 +65,9 @@ public class UpsertScopeCommandHandlerTests : TestBase
     {
         // Arrange
         const string newScopeName = "new-scope";
-        var command = new UpsertScopeCommand(Guid.NewGuid(), newScopeName, Guid.NewGuid(), new UpsertScopeFields(newScopeName));
-        
+        var command = new UpsertScopeCommand(Guid.NewGuid(), newScopeName, Guid.NewGuid(),
+            new UpsertScopeFields(newScopeName));
+
         _authorizationService.EnsureRootIpOrOwnerAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
 
@@ -75,9 +77,10 @@ public class UpsertScopeCommandHandlerTests : TestBase
         // Assert
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(newScopeName, result.Value.Name);
-        
+
         // Verify DB State
-        var scopeInDb = await DbContext.Scopes.FirstOrDefaultAsync(s => s.Name == newScopeName && s.OrganizationId == command.OrganizationId);
+        var scopeInDb = await DbContext.Scopes.FirstOrDefaultAsync(
+            s => s.Name == newScopeName && s.OrganizationId == command.OrganizationId, TestContext.CancellationToken);
         Assert.IsNotNull(scopeInDb);
     }
 
@@ -87,16 +90,17 @@ public class UpsertScopeCommandHandlerTests : TestBase
         // Arrange
         const string oldScopeName = "old-name";
         const string newNameForUpdate = "new-name";
-        
-        var orgId = Guid.NewGuid();
-        var existingScope = new Scope { Id = Guid.NewGuid(), Name = oldScopeName, OrganizationId = orgId };
-        
-        // Seed DB
-        await DbContext.Scopes.AddAsync(existingScope);
-        await DbContext.SaveChangesAsync();
 
-        var command = new UpsertScopeCommand(orgId, oldScopeName, Guid.NewGuid(), new UpsertScopeFields(newNameForUpdate));
-        
+        var orgId = Guid.NewGuid();
+        var existingScope = new Scope { Name = oldScopeName, OrganizationId = orgId };
+
+        // Seed DB
+        await DbContext.Scopes.AddAsync(existingScope, TestContext.CancellationToken);
+        await DbContext.SaveChangesAsync(TestContext.CancellationToken);
+
+        var command =
+            new UpsertScopeCommand(orgId, oldScopeName, Guid.NewGuid(), new UpsertScopeFields(newNameForUpdate));
+
         _authorizationService.EnsureRootIpOrOwnerAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
 
@@ -106,9 +110,10 @@ public class UpsertScopeCommandHandlerTests : TestBase
         // Assert
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(newNameForUpdate, result.Value.Name);
-        
+
         // Verify DB State
-        var scopeInDb = await DbContext.Scopes.FirstOrDefaultAsync(s => s.Id == existingScope.Id);
+        var scopeInDb =
+            await DbContext.Scopes.FirstOrDefaultAsync(s => s.Id == existingScope.Id, TestContext.CancellationToken);
         Assert.IsNotNull(scopeInDb);
         Assert.AreEqual(newNameForUpdate, scopeInDb.Name);
     }

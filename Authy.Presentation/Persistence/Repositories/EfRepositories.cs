@@ -1,7 +1,8 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Organizations;
-using Authy.Presentation.Domain.Roles;
-using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Domain.Organizations.Data;
+using Authy.Presentation.Domain.Roles.Data;
+using Authy.Presentation.Domain.Scopes.Data;
+using Authy.Presentation.Domain.Users.Data;
+using Authy.Presentation.Entitites;
 using Microsoft.EntityFrameworkCore;
 
 namespace Authy.Presentation.Persistence.Repositories;
@@ -89,6 +90,50 @@ public class OrganizationRepository(AuthyDbContext dbContext) : IOrganizationRep
     public async Task AddAsync(Organization organization, CancellationToken cancellationToken)
     {
         await dbContext.Organizations.AddAsync(organization, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+}
+
+public class UserRepository(AuthyDbContext dbContext) : IUserRepository
+{
+    public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.Users
+            .Include(u => u.Roles)
+            .ThenInclude(r => r.Scopes)
+            .Include(u => u.Organization)
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
+}
+
+public class RefreshTokenRepository(AuthyDbContext dbContext) : IRefreshTokenRepository
+{
+    public async Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
+    {
+        await dbContext.RefreshTokens.AddAsync(refreshToken, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    public Task<RefreshToken?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Id == id, cancellationToken);
+    }
+
+    public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken)
+    {
+        return dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
+    }
+
+    public Task<List<RefreshToken>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return dbContext.RefreshTokens
+            .Where(rt => rt.UserId == userId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task UpdateAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
+    {
+        dbContext.RefreshTokens.Update(refreshToken);
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 }

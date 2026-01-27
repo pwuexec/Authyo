@@ -1,4 +1,6 @@
-namespace Authy.Presentation.Domain.Roles;
+using Authy.Presentation.Entitites;
+
+namespace Authy.Presentation.Domain.Roles.Data;
 
 public interface IRoleRepository
 {

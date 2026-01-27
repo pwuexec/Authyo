@@ -1,8 +1,6 @@
 using Authy.Presentation.Domain;
 using Authy.Presentation.Domain.Organizations;
 using Authy.Presentation.Persistence.Repositories;
-using Authy.Presentation.Shared;
-using Authy.Presentation.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -22,18 +20,18 @@ public class CreateOrganizationCommandHandlerTests : TestBase
     {
         const string localIp = "127.0.0.1";
         const string rootIpConfigKey = "RootIps:0";
-        
+
         // Use real configuration for easier array binding
         var myConfiguration = new Dictionary<string, string?>
         {
-            {rootIpConfigKey, localIp}
+            { rootIpConfigKey, localIp }
         };
 
         _configuration = new ConfigurationBuilder()
             .AddInMemoryCollection(myConfiguration)
             .Build();
     }
-    
+
     [TestInitialize]
     public override void Setup()
     {
@@ -62,12 +60,17 @@ public class CreateOrganizationCommandHandlerTests : TestBase
         // Arrange
         const string newOrgName = "New Org";
         const string localIp = "127.0.0.1";
-        
+
         var command = new CreateOrganizationCommand(newOrgName);
-        
+
         // Mock HttpContext for EnsureRootIp checking
-        var httpContext = new DefaultHttpContext();
-        httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse(localIp);
+        var httpContext = new DefaultHttpContext
+        {
+            Connection =
+            {
+                RemoteIpAddress = System.Net.IPAddress.Parse(localIp)
+            }
+        };
         _httpContextAccessor.HttpContext.Returns(httpContext);
 
         // Act
@@ -76,9 +79,10 @@ public class CreateOrganizationCommandHandlerTests : TestBase
         // Assert
         Assert.IsTrue(result.IsSuccess);
         Assert.AreEqual(newOrgName, result.Value.Name);
-        
+
         // Verify DB State
-        var orgInDb = await DbContext.Organizations.FirstOrDefaultAsync(o => o.Name == newOrgName);
+        var orgInDb =
+            await DbContext.Organizations.FirstOrDefaultAsync(o => o.Name == newOrgName, TestContext.CancellationToken);
         Assert.IsNotNull(orgInDb);
     }
 }

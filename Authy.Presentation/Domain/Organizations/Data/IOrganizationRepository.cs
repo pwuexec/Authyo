@@ -1,4 +1,6 @@
-namespace Authy.Presentation.Domain.Organizations;
+using Authy.Presentation.Entitites;
+
+namespace Authy.Presentation.Domain.Organizations.Data;
 
 public interface IOrganizationRepository
 {

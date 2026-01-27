@@ -1,13 +1,13 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Organizations;
-using Authy.Presentation.Domain.Roles;
-using Authy.Presentation.Domain.Scopes;
+using Authy.Presentation.Domain.Organizations.Data;
+using Authy.Presentation.Domain.Roles.Data;
+using Authy.Presentation.Domain.Scopes.Data;
 using Authy.Presentation.Shared.Abstractions;
-using Authy.Presentation.Domain.Users;
+using Authy.Presentation.Domain.Users.Data;
+using Authy.Presentation.Entitites;
 
 namespace Authy.Presentation.Shared;
 
-public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRepository, IUserRepository, IUnitOfWork
+public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRepository, IUserRepository, IUnitOfWork, IRefreshTokenRepository
 {
     private static readonly List<Organization> Organizations = new()
     {
@@ -114,6 +114,40 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
 
     public Task SaveChangesAsync(CancellationToken cancellationToken = default)
     {
+        return Task.CompletedTask;
+    }
+
+    private static readonly List<RefreshToken> RefreshTokens = new();
+
+    public Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
+    {
+        RefreshTokens.Add(refreshToken);
+        return Task.CompletedTask;
+    }
+
+    public Task<RefreshToken?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(RefreshTokens.FirstOrDefault(rt => rt.Id == id));
+    }
+
+    public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(RefreshTokens.FirstOrDefault(rt => rt.Token == token));
+    }
+
+    public Task<List<RefreshToken>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(RefreshTokens.Where(rt => rt.UserId == userId).ToList());
+    }
+
+    public Task UpdateAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
+    {
+        var existing = RefreshTokens.FirstOrDefault(rt => rt.Id == refreshToken.Id);
+        if (existing != null)
+        {
+            RefreshTokens.Remove(existing);
+            RefreshTokens.Add(refreshToken);
+        }
         return Task.CompletedTask;
     }
 }
