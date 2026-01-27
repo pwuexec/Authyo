@@ -1,10 +1,17 @@
 using Authy.Presentation.Domain;
 using Authy.Presentation.Shared;
+using System.Security.Claims;
 
 namespace Authy.Presentation.Extensions;
 
 public static class HttpContextExtensions
 {
+    public static Guid? GetUserId(this ClaimsPrincipal principal)
+    {
+        var value = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        return Guid.TryParse(value, out var result) ? result : null;
+    }
+
     public static Result EnsureRootIp(this HttpContext? httpContext, IConfiguration configuration)
     {
         if (httpContext == null)

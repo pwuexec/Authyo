@@ -20,7 +20,7 @@ public class AuthorizationService(
         }
 
         var org = await organizationRepository.GetByIdAsync(organizationId, cancellationToken);
-        if (org == null || !org.Owners.Any(o => o.Id == userId))
+        if (org == null || org.Owners.All(o => o.Id != userId))
         {
             return Result.Failure(DomainErrors.User.UnauthorizedOwner);
         }

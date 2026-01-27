@@ -14,6 +14,12 @@ public class CreateOrganizationCommandHandler(
 {
     public async Task<Result<Organization>> HandleAsync(CreateOrganizationCommand command, CancellationToken cancellationToken)
     {
+        var validationFailure = Validate(command).FailureOrNull<Organization>();
+        if (validationFailure is not null)
+        {
+            return validationFailure;
+        }
+
         var authResult = httpContextAccessor.HttpContext.EnsureRootIp(configuration);
         if (authResult.IsFailure)
         {
@@ -29,5 +35,14 @@ public class CreateOrganizationCommandHandler(
         await organizationRepository.AddAsync(org, cancellationToken);
 
         return Result.Success(org);
+    }
+
+    private static List<Error> Validate(CreateOrganizationCommand command)
+    {
+        var errors = new List<Error>();
+
+        errors.NotEmptyIfNotNull(command.Name, DomainErrors.Organization.NameEmpty);
+
+        return errors;
     }
 }
