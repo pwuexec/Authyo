@@ -65,7 +65,9 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-var authGroup = app.MapGroup("/").WithTags("Authentication");
+var authGroup = app.MapGroup("/")
+    .WithTags("Authentication")
+    .WithDefaultApiResponses();
 
 authGroup.MapPost("/login", async (IDispatcher dispatcher, HttpContext httpContext,
     [FromBody] LoginRequest request, CancellationToken cancellationToken) =>
@@ -82,8 +84,7 @@ authGroup.MapPost("/login", async (IDispatcher dispatcher, HttpContext httpConte
 })
 .WithName("Login")
 .WithSummary("Logs in a user by generating a token")
-.Produces<RefreshTokenCommandOutput>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status400BadRequest);
+.Produces<RefreshTokenCommandOutput>(StatusCodes.Status200OK);
 
 authGroup.MapPost("/refresh", async (IDispatcher dispatcher, HttpContext httpContext,
     [FromBody] RefreshTokenRequest request, CancellationToken cancellationToken) =>
@@ -100,10 +101,11 @@ authGroup.MapPost("/refresh", async (IDispatcher dispatcher, HttpContext httpCon
 })
 .WithName("RefreshToken")
 .WithSummary("Refreshes the access token using a refresh token")
-.Produces<RefreshTokenCommandOutput>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status400BadRequest);
+.Produces<RefreshTokenCommandOutput>(StatusCodes.Status200OK);
 
-var usersGroup = app.MapGroup("/users").WithTags("Users");
+var usersGroup = app.MapGroup("/users")
+    .WithTags("Users")
+    .WithDefaultApiResponses();
 
 usersGroup.MapGet("/{userId:guid}/sessions", async (IDispatcher dispatcher,
     Guid userId, ClaimsPrincipal user, CancellationToken cancellationToken) =>
@@ -119,10 +121,11 @@ usersGroup.MapGet("/{userId:guid}/sessions", async (IDispatcher dispatcher,
 .AddEndpointFilter<RootOrAuthenticatedFilter>()
 .WithName("GetUserSessions")
 .WithSummary("Gets active sessions for a specific user")
-.Produces<List<RefreshToken>>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status403Forbidden);
+.Produces<List<RefreshToken>>(StatusCodes.Status200OK);
 
-var sessionsGroup = app.MapGroup("/sessions").WithTags("Sessions");
+var sessionsGroup = app.MapGroup("/sessions")
+    .WithTags("Sessions")
+    .WithDefaultApiResponses();
 
 sessionsGroup.MapDelete("/{id:guid}", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
@@ -138,10 +141,11 @@ sessionsGroup.MapDelete("/{id:guid}", async (IDispatcher dispatcher,
 .AddEndpointFilter<RootOrAuthenticatedFilter>()
 .WithName("RevokeSession")
 .WithSummary("Revokes a specific session")
-.Produces(StatusCodes.Status204NoContent)
-.ProducesProblem(StatusCodes.Status403Forbidden);
+.Produces(StatusCodes.Status204NoContent);
 
-var orgGroup = app.MapGroup("/organization").WithTags("Organization");
+var orgGroup = app.MapGroup("/organization")
+    .WithTags("Organization")
+    .WithDefaultApiResponses();
 
 orgGroup.MapPost("", async (IDispatcher dispatcher,
     [FromBody] PostOrganizationRequest request, CancellationToken cancellationToken) =>
@@ -155,8 +159,7 @@ orgGroup.MapPost("", async (IDispatcher dispatcher,
 })
 .WithName("CreateOrganization")
 .WithSummary("Creates a new organization")
-.Produces<Organization>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status400BadRequest);
+.Produces<Organization>(StatusCodes.Status200OK);
 
 orgGroup.MapGet("", async (IDispatcher dispatcher, CancellationToken cancellationToken) =>
 {
@@ -185,8 +188,7 @@ orgGroup.MapPut("/{id:guid}/role", async (IDispatcher dispatcher,
 .AddEndpointFilter<RootOrAuthenticatedFilter>()
 .WithName("UpsertRole")
 .WithSummary("Creates or updates a role within an organization")
-.Produces<Role>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status403Forbidden);
+.Produces<Role>(StatusCodes.Status200OK);
 
 orgGroup.MapPut("/{id:guid}/scope", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, [FromBody] PutScopeRequest request, CancellationToken cancellationToken) =>
@@ -207,8 +209,7 @@ orgGroup.MapPut("/{id:guid}/scope", async (IDispatcher dispatcher,
 .AddEndpointFilter<RootOrAuthenticatedFilter>()
 .WithName("UpsertScope")
 .WithSummary("Creates or updates a scope within an organization")
-.Produces<Scope>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status403Forbidden);
+.Produces<Scope>(StatusCodes.Status200OK);
 
 orgGroup.MapGet("/{id:guid}/role", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
@@ -225,8 +226,7 @@ orgGroup.MapGet("/{id:guid}/role", async (IDispatcher dispatcher,
 .AddEndpointFilter<RootOrAuthenticatedFilter>()
 .WithName("GetRoles")
 .WithSummary("Retrieves all roles for an organization")
-.Produces<List<GetRolesOutput>>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status403Forbidden);
+.Produces<List<GetRolesOutput>>(StatusCodes.Status200OK);
 
 orgGroup.MapGet("/{id:guid}/scope", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
@@ -243,8 +243,7 @@ orgGroup.MapGet("/{id:guid}/scope", async (IDispatcher dispatcher,
 .AddEndpointFilter<RootOrAuthenticatedFilter>()
 .WithName("GetScopes")
 .WithSummary("Retrieves all scopes for an organization")
-.Produces<List<GetScopesOutput>>(StatusCodes.Status200OK)
-.ProducesProblem(StatusCodes.Status403Forbidden);
+.Produces<List<GetScopesOutput>>(StatusCodes.Status200OK);
 
 app.Run();
 
@@ -255,8 +254,4 @@ namespace Authy.Presentation
     public record PutRoleRequest(string Name, List<string> Scopes);
     public record PutScopeRequest(string Name);
     public record RefreshTokenRequest(string AccessToken, string RefreshToken);
-
-    // Placeholder response records if not available in Shared
-    // I am assuming they are returned by the handlers, but I need to check where they are defined to use them in Produces<T>
-    // However, I don't see them imported. I'll need to check the codebase for the return types of the commands/queries.
 }
