@@ -8,6 +8,8 @@ namespace Authy.Presentation.Domain.Organizations;
 
 public static class OrganizationEndpoints
 {
+    public record PostOrganizationRequest(string Name);
+
     public static void MapOrganizationEndpoints(this IEndpointRouteBuilder app)
     {
         var orgGroup = app.MapGroup("/organization")

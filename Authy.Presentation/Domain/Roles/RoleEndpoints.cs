@@ -11,6 +11,8 @@ namespace Authy.Presentation.Domain.Roles;
 
 public static class RoleEndpoints
 {
+    public record PutRoleRequest(string Name, List<string> Scopes);
+
     public static void MapRoleEndpoints(this IEndpointRouteBuilder app)
     {
         var orgGroup = app.MapGroup("/organization")

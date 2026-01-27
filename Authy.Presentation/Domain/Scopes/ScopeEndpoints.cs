@@ -11,6 +11,8 @@ namespace Authy.Presentation.Domain.Scopes;
 
 public static class ScopeEndpoints
 {
+    public record PutScopeRequest(string Name);
+
     public static void MapScopeEndpoints(this IEndpointRouteBuilder app)
     {
         var orgGroup = app.MapGroup("/organization")

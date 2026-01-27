@@ -11,6 +11,9 @@ namespace Authy.Presentation.Domain.Users;
 
 public static class UserEndpoints
 {
+    public record LoginRequest(Guid UserId);
+    public record RefreshTokenRequest(string AccessToken, string RefreshToken);
+
     public static void MapAuthenticationEndpoints(this IEndpointRouteBuilder app)
     {
         var authGroup = app.MapGroup("/")
