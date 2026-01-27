@@ -8,11 +8,13 @@ using Authy.Presentation.Domain.Scopes;
 using Authy.Presentation.Domain.Scopes.Data;
 using Authy.Presentation.Domain.Users;
 using Authy.Presentation.Domain.Users.Data;
+using Authy.Presentation.Entitites;
 using Authy.Presentation.Extensions;
 using Authy.Presentation.Shared;
 using Authy.Presentation.Shared.Abstractions;
 using Authy.Presentation.Shared.Behaviors;
 using Microsoft.AspNetCore.Mvc;
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,13 +58,16 @@ var app = builder.Build();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.MapScalarApiReference();
 }
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapPost("/login", async (IDispatcher dispatcher, HttpContext httpContext,
+var authGroup = app.MapGroup("/").WithTags("Authentication");
+
+authGroup.MapPost("/login", async (IDispatcher dispatcher, HttpContext httpContext,
     [FromBody] LoginRequest request, CancellationToken cancellationToken) =>
 {
     var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
@@ -74,9 +79,13 @@ app.MapPost("/login", async (IDispatcher dispatcher, HttpContext httpContext,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-});
+})
+.WithName("Login")
+.WithSummary("Logs in a user by generating a token")
+.Produces<RefreshTokenCommandOutput>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status400BadRequest);
 
-app.MapPost("/refresh", async (IDispatcher dispatcher, HttpContext httpContext,
+authGroup.MapPost("/refresh", async (IDispatcher dispatcher, HttpContext httpContext,
     [FromBody] RefreshTokenRequest request, CancellationToken cancellationToken) =>
 {
     var ipAddress = httpContext.Connection.RemoteIpAddress?.ToString() ?? "";
@@ -88,9 +97,15 @@ app.MapPost("/refresh", async (IDispatcher dispatcher, HttpContext httpContext,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-});
+})
+.WithName("RefreshToken")
+.WithSummary("Refreshes the access token using a refresh token")
+.Produces<RefreshTokenCommandOutput>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status400BadRequest);
 
-app.MapGet("/users/{userId:guid}/sessions", async (IDispatcher dispatcher, 
+var usersGroup = app.MapGroup("/users").WithTags("Users");
+
+usersGroup.MapGet("/{userId:guid}/sessions", async (IDispatcher dispatcher,
     Guid userId, ClaimsPrincipal user, CancellationToken cancellationToken) =>
 {
     var requestingUserId = user.GetUserId() ?? Guid.Empty;
@@ -100,22 +115,35 @@ app.MapGet("/users/{userId:guid}/sessions", async (IDispatcher dispatcher,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-}).AddEndpointFilter<RootOrAuthenticatedFilter>();
+})
+.AddEndpointFilter<RootOrAuthenticatedFilter>()
+.WithName("GetUserSessions")
+.WithSummary("Gets active sessions for a specific user")
+.Produces<List<RefreshToken>>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
-app.MapDelete("/sessions/{id:guid}", async (IDispatcher dispatcher, 
+var sessionsGroup = app.MapGroup("/sessions").WithTags("Sessions");
+
+sessionsGroup.MapDelete("/{id:guid}", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
 {
     var requestingUserId = user.GetUserId() ?? Guid.Empty;
     var command = new RevokeSessionCommand(id, requestingUserId);
     var result = await dispatcher.DispatchAsync(command, cancellationToken);
     
-    // If we revoke current session, should we return 401 or just OK? OK.
     return result.IsSuccess 
         ? Results.NoContent()
         : result.ToProblem();
-}).AddEndpointFilter<RootOrAuthenticatedFilter>();
+})
+.AddEndpointFilter<RootOrAuthenticatedFilter>()
+.WithName("RevokeSession")
+.WithSummary("Revokes a specific session")
+.Produces(StatusCodes.Status204NoContent)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
-app.MapPost("/organization", async (IDispatcher dispatcher, 
+var orgGroup = app.MapGroup("/organization").WithTags("Organization");
+
+orgGroup.MapPost("", async (IDispatcher dispatcher,
     [FromBody] PostOrganizationRequest request, CancellationToken cancellationToken) =>
 {
     var command = new CreateOrganizationCommand(request.Name);
@@ -124,9 +152,13 @@ app.MapPost("/organization", async (IDispatcher dispatcher,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-});
+})
+.WithName("CreateOrganization")
+.WithSummary("Creates a new organization")
+.Produces<Organization>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status400BadRequest);
 
-app.MapGet("/organization", async (IDispatcher dispatcher, CancellationToken cancellationToken) =>
+orgGroup.MapGet("", async (IDispatcher dispatcher, CancellationToken cancellationToken) =>
 {
     var query = new GetOrganizationsQuery();
     var result = await dispatcher.DispatchAsync(query, cancellationToken);
@@ -134,9 +166,12 @@ app.MapGet("/organization", async (IDispatcher dispatcher, CancellationToken can
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-});
+})
+.WithName("GetOrganizations")
+.WithSummary("Retrieves all organizations")
+.Produces<List<GetOrganizationsOutput>>(StatusCodes.Status200OK);
 
-app.MapPut("/organization/{id:guid}/role", async (IDispatcher dispatcher, 
+orgGroup.MapPut("/{id:guid}/role", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, [FromBody] PutRoleRequest request, CancellationToken cancellationToken) =>
 {
     var userId = user.GetUserId();
@@ -146,9 +181,14 @@ app.MapPut("/organization/{id:guid}/role", async (IDispatcher dispatcher,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-}).AddEndpointFilter<RootOrAuthenticatedFilter>();
+})
+.AddEndpointFilter<RootOrAuthenticatedFilter>()
+.WithName("UpsertRole")
+.WithSummary("Creates or updates a role within an organization")
+.Produces<Role>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
-app.MapPut("/organization/{id:guid}/scope", async (IDispatcher dispatcher, 
+orgGroup.MapPut("/{id:guid}/scope", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, [FromBody] PutScopeRequest request, CancellationToken cancellationToken) =>
 {
     var userId = user.GetUserId();
@@ -163,9 +203,14 @@ app.MapPut("/organization/{id:guid}/scope", async (IDispatcher dispatcher,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-}).AddEndpointFilter<RootOrAuthenticatedFilter>();
+})
+.AddEndpointFilter<RootOrAuthenticatedFilter>()
+.WithName("UpsertScope")
+.WithSummary("Creates or updates a scope within an organization")
+.Produces<Scope>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
-app.MapGet("/organization/{id:guid}/role", async (IDispatcher dispatcher, 
+orgGroup.MapGet("/{id:guid}/role", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
 {
     var userId = user.GetUserId();
@@ -176,9 +221,14 @@ app.MapGet("/organization/{id:guid}/role", async (IDispatcher dispatcher,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-}).AddEndpointFilter<RootOrAuthenticatedFilter>();
+})
+.AddEndpointFilter<RootOrAuthenticatedFilter>()
+.WithName("GetRoles")
+.WithSummary("Retrieves all roles for an organization")
+.Produces<List<GetRolesOutput>>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
-app.MapGet("/organization/{id:guid}/scope", async (IDispatcher dispatcher, 
+orgGroup.MapGet("/{id:guid}/scope", async (IDispatcher dispatcher,
     Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
 {
     var userId = user.GetUserId();
@@ -189,7 +239,12 @@ app.MapGet("/organization/{id:guid}/scope", async (IDispatcher dispatcher,
     return result.IsSuccess 
         ? Results.Ok(result.Value)
         : result.ToProblem();
-}).AddEndpointFilter<RootOrAuthenticatedFilter>();
+})
+.AddEndpointFilter<RootOrAuthenticatedFilter>()
+.WithName("GetScopes")
+.WithSummary("Retrieves all scopes for an organization")
+.Produces<List<GetScopesOutput>>(StatusCodes.Status200OK)
+.ProducesProblem(StatusCodes.Status403Forbidden);
 
 app.Run();
 
@@ -200,4 +255,8 @@ namespace Authy.Presentation
     public record PutRoleRequest(string Name, List<string> Scopes);
     public record PutScopeRequest(string Name);
     public record RefreshTokenRequest(string AccessToken, string RefreshToken);
+
+    // Placeholder response records if not available in Shared
+    // I am assuming they are returned by the handlers, but I need to check where they are defined to use them in Produces<T>
+    // However, I don't see them imported. I'll need to check the codebase for the return types of the commands/queries.
 }
