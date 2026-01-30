@@ -1,9 +1,9 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Scopes;
-using Authy.Presentation.Entitites;
-using Authy.Presentation.Persistence.Repositories;
-using Authy.Presentation.Shared;
-using Authy.Presentation.Shared.Abstractions;
+using Authy.Application.Domain;
+using Authy.Application.Domain.Scopes;
+using Authy.Application.Entitites;
+using Authy.Application.Data.Repositories;
+using Authy.Application.Shared;
+using Authy.Application.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 
@@ -118,3 +118,4 @@ public class UpsertScopeCommandHandlerTests : TestBase
         Assert.AreEqual(newNameForUpdate, scopeInDb.Name);
     }
 }
+

@@ -1,0 +1,337 @@
+@page "/organizations/{OrgId:guid}/roles/new"
+@page "/organizations/{OrgId:guid}/roles/{RoleName}/edit"
+@inject IDispatcher Dispatcher
+@inject IAdminContext AdminContext
+@inject NavigationManager Navigation
+@using Authy.Application.Domain.Organizations
+@using Authy.Application.Domain.Roles
+@using Authy.Application.Domain.Scopes
+
+<PageTitle>@(IsEditMode ? "Edit Role" : "Create Role") - Authy Admin</PageTitle>
+
+<div class="breadcrumb">
+    <a href="/organizations">Organizations</a> /
+    <a href="/organizations/@OrgId">@orgName</a> /
+    <a href="/organizations/@OrgId/roles">Roles</a> /
+    @(IsEditMode ? $"Edit {RoleName}" : "New")
+</div>
+
+<h1>@(IsEditMode ? $"Edit Role: {RoleName}" : "Create New Role")</h1>
+
+<Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
+
+@if (isLoading)
+{
+    <LoadingSpinner IsLoading="true" Message="Loading..." />
+}
+else
+{
+    <div class="form-container">
+        <form @onsubmit="SaveRole">
+            <div class="form-group">
+                <label for="roleName">Role Name</label>
+                <input type="text" id="roleName" @bind="roleName" class="form-input"
+                       placeholder="Enter role name" disabled="@IsEditMode" />
+                @if (IsEditMode)
+                {
+                    <small class="form-help">Role name cannot be changed after creation.</small>
+                }
+            </div>
+
+            <div class="form-group">
+                <label>Scopes</label>
+                <p class="form-help">Select at least one scope for this role.</p>
+
+                @if (!availableScopes.Any())
+                {
+                    <p class="no-scopes-message">
+                        No scopes available. <a href="/organizations/@OrgId/scopes/new">Create a scope</a> first.
+                    </p>
+                }
+                else
+                {
+                    <div class="scope-checkboxes">
+                        @foreach (var scope in availableScopes)
+                        {
+                            <label class="checkbox-label">
+                                <input type="checkbox" checked="@selectedScopeNames.Contains(scope.Name)"
+                                       @onchange="@(e => ToggleScope(scope.Name, (bool)e.Value!))" />
+                                @scope.Name
+                            </label>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" @onclick="Cancel">Cancel</button>
+                <button type="submit" class="btn btn-primary" disabled="@(isSaving || !availableScopes.Any())">
+                    @if (isSaving)
+                    {
+                        <span>Saving...</span>
+                    }
+                    else
+                    {
+                        <span>@(IsEditMode ? "Update Role" : "Create Role")</span>
+                    }
+                </button>
+            </div>
+        </form>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid OrgId { get; set; }
+    [Parameter] public string? RoleName { get; set; }
+
+    private bool IsEditMode => !string.IsNullOrEmpty(RoleName);
+
+    private string orgName = string.Empty;
+    private string roleName = string.Empty;
+    private List<GetScopesOutput> availableScopes = new();
+    private HashSet<string> selectedScopeNames = new();
+    private bool isLoading = true;
+    private bool isSaving = false;
+
+    private bool showAlert = false;
+    private string alertMessage = string.Empty;
+    private Alert.AlertType alertType = Alert.AlertType.Info;
+
+    // Mock user ID for authorization
+    private readonly Guid mockUserId = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e");
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+
+        // Load organization name
+        var orgsResult = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
+        if (orgsResult.IsSuccess)
+        {
+            var org = orgsResult.Value.FirstOrDefault(o => o.Id == OrgId);
+            if (org != null)
+            {
+                orgName = org.Name;
+            }
+        }
+
+        // Load available scopes
+        var scopesResult = await Dispatcher.DispatchAsync(
+            new GetScopesQuery(OrgId, mockUserId),
+            CancellationToken.None);
+
+        if (scopesResult.IsSuccess)
+        {
+            availableScopes = scopesResult.Value;
+        }
+
+        // If editing, load existing role data
+        if (IsEditMode && !string.IsNullOrEmpty(RoleName))
+        {
+            var rolesResult = await Dispatcher.DispatchAsync(
+                new GetRolesQuery(OrgId, mockUserId),
+                CancellationToken.None);
+
+            if (rolesResult.IsSuccess)
+            {
+                var decodedRoleName = Uri.UnescapeDataString(RoleName);
+                var existingRole = rolesResult.Value.FirstOrDefault(r =>
+                    r.Name.Equals(decodedRoleName, StringComparison.OrdinalIgnoreCase));
+
+                if (existingRole != null)
+                {
+                    roleName = existingRole.Name;
+                    selectedScopeNames = existingRole.Scopes.Select(s => s.Name).ToHashSet();
+                }
+                else
+                {
+                    ShowAlert($"Role '{decodedRoleName}' not found.", Alert.AlertType.Error);
+                }
+            }
+        }
+
+        isLoading = false;
+    }
+
+    private void ToggleScope(string scopeName, bool isChecked)
+    {
+        if (isChecked)
+        {
+            selectedScopeNames.Add(scopeName);
+        }
+        else
+        {
+            selectedScopeNames.Remove(scopeName);
+        }
+    }
+
+    private async Task SaveRole()
+    {
+        if (string.IsNullOrWhiteSpace(roleName))
+        {
+            ShowAlert("Role name is required.", Alert.AlertType.Warning);
+            return;
+        }
+
+        if (!selectedScopeNames.Any())
+        {
+            ShowAlert("At least one scope is required.", Alert.AlertType.Warning);
+            return;
+        }
+
+        isSaving = true;
+        var result = await Dispatcher.DispatchAsync(
+            new UpsertRoleCommand(OrgId, roleName, selectedScopeNames.ToList(), mockUserId),
+            CancellationToken.None);
+
+        if (result.IsSuccess)
+        {
+            Navigation.NavigateTo($"/organizations/{OrgId}/roles");
+        }
+        else
+        {
+            ShowAlert($"Error saving role: {result.Error.Description}", Alert.AlertType.Error);
+        }
+        isSaving = false;
+    }
+
+    private void Cancel()
+    {
+        Navigation.NavigateTo($"/organizations/{OrgId}/roles");
+    }
+
+    private void ShowAlert(string message, Alert.AlertType type)
+    {
+        alertMessage = message;
+        alertType = type;
+        showAlert = true;
+    }
+}
+
+<style>
+    .breadcrumb {
+        margin-bottom: 1rem;
+        color: #666;
+    }
+
+    .breadcrumb a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .form-container {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 600px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+        color: #333;
+    }
+
+    .form-input {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+
+    .form-input:disabled {
+        background: #e9ecef;
+        cursor: not-allowed;
+    }
+
+    .form-help {
+        display: block;
+        color: #666;
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    .scope-checkboxes {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        max-height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-weight: normal;
+    }
+
+    .checkbox-label input {
+        width: 18px;
+        height: 18px;
+    }
+
+    .no-scopes-message {
+        color: #666;
+        font-style: italic;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 4px;
+    }
+
+    .no-scopes-message a {
+        color: #007bff;
+    }
+
+    .form-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: flex-end;
+        padding-top: 1rem;
+        border-top: 1px solid #eee;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+</style>
+

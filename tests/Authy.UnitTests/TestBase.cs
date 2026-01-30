@@ -1,4 +1,4 @@
-using Authy.Presentation.Persistence;
+using Authy.Application.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Time.Testing;
 
@@ -29,3 +29,4 @@ public abstract class TestBase
         DbContext.Dispose();
     }
 }
+

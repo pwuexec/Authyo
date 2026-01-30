@@ -3,7 +3,8 @@
     "allow": [
       "Bash(dotnet restore:*)",
       "Bash(dotnet build:*)",
-      "Bash(git -C \"C:\\\\Users\\\\pwuexec\\\\RiderProjects\\\\Authy\\\\Authy\" show f0fb6b8:Authy.Presentation/Program.cs)"
+      "Bash(git -C \"C:\\\\Users\\\\pwuexec\\\\RiderProjects\\\\Authy\\\\Authy\" show f0fb6b8:Authy.Presentation/Program.cs)",
+      "Bash(dotnet test:*)"
     ]
   }
 }

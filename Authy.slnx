@@ -1,6 +1,10 @@
 <Solution>
+  <Folder Name="/frontend/">
+    <Project Path="frontend/Authy.Admin/Authy.Admin.csproj" Id="db3b3b81-0e8e-47e9-a53f-24eea28fd1e0" />
+  </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Authy.UnitTests/Authy.UnitTests.csproj" />
   </Folder>
+  <Project Path="Authy.Application/Authy.Application.csproj" Id="ccf1c4c3-4f9a-48f4-8cf6-bda913179f2f" />
   <Project Path="Authy.Presentation/Authy.Presentation.csproj" />
 </Solution>

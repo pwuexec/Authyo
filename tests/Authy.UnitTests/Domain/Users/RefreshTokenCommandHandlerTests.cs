@@ -1,8 +1,8 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Users;
-using Authy.Presentation.Entitites;
-using Authy.Presentation.Persistence.Repositories;
-using Authy.Presentation.Shared.Abstractions;
+using Authy.Application.Domain;
+using Authy.Application.Domain.Users;
+using Authy.Application.Entitites;
+using Authy.Application.Data.Repositories;
+using Authy.Application.Shared.Abstractions;
 using NSubstitute;
 
 namespace Authy.UnitTests.Domain.Users;
@@ -96,3 +96,5 @@ public class RefreshTokenCommandHandlerTests : TestBase
     }
 
 }
+
+

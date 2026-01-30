@@ -1,0 +1,42 @@
+@typeparam TItem
+
+@if (IsLoading)
+{
+    <LoadingSpinner IsLoading="true" Message="Loading..." />
+}
+else if (Items == null || !Items.Any())
+{
+    <div class="empty-state">
+        <p>@EmptyMessage</p>
+    </div>
+}
+else
+{
+    <table class="data-table">
+        <thead>
+            <tr>
+                @HeaderTemplate
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Items)
+            {
+                <tr>
+                    @if (RowTemplate != null)
+                    {
+                        @RowTemplate(item)
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    [Parameter] public IEnumerable<TItem>? Items { get; set; }
+    [Parameter] public bool IsLoading { get; set; }
+    [Parameter] public string EmptyMessage { get; set; } = "No items found.";
+    [Parameter] public RenderFragment? HeaderTemplate { get; set; }
+    [Parameter] public RenderFragment<TItem>? RowTemplate { get; set; }
+}
+

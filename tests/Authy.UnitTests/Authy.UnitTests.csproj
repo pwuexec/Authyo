@@ -21,6 +21,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Authy.Presentation\Authy.Presentation.csproj" />
+      <ProjectReference Include="..\..\frontend\Authy.Admin\Authy.Admin.csproj" />
     </ItemGroup>
 
 </Project>

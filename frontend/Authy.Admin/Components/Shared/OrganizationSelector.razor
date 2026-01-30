@@ -1,0 +1,94 @@
+@inject IDispatcher Dispatcher
+@using Authy.Application.Domain.Organizations
+
+<div class="org-selector">
+    <label for="org-select">Organization:</label>
+    @if (IsLoading)
+    {
+        <span class="loading-text">Loading...</span>
+    }
+    else
+    {
+        <select id="org-select" @onchange="OnOrganizationChanged" disabled="@(!Organizations.Any())">
+            @if (!SelectedOrganizationId.HasValue)
+            {
+                <option value="">-- Select Organization --</option>
+            }
+            @foreach (var org in Organizations)
+            {
+                <option value="@org.Id" selected="@(org.Id == SelectedOrganizationId)">@org.Name</option>
+            }
+        </select>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid? SelectedOrganizationId { get; set; }
+    [Parameter] public EventCallback<Guid?> SelectedOrganizationIdChanged { get; set; }
+    [Parameter] public EventCallback<GetOrganizationsOutput?> OnSelectionChanged { get; set; }
+
+    private List<GetOrganizationsOutput> Organizations { get; set; } = new();
+    private bool IsLoading { get; set; } = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadOrganizations();
+    }
+
+    private async Task LoadOrganizations()
+    {
+        IsLoading = true;
+        var result = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
+        if (result.IsSuccess)
+        {
+            Organizations = result.Value;
+        }
+        IsLoading = false;
+    }
+
+    private async Task OnOrganizationChanged(ChangeEventArgs e)
+    {
+        var value = e.Value?.ToString();
+        Guid? selectedId = string.IsNullOrEmpty(value) ? null : Guid.Parse(value);
+
+        await SelectedOrganizationIdChanged.InvokeAsync(selectedId);
+
+        var selectedOrg = selectedId.HasValue
+            ? Organizations.FirstOrDefault(o => o.Id == selectedId.Value)
+            : null;
+        await OnSelectionChanged.InvokeAsync(selectedOrg);
+    }
+
+    public async Task RefreshAsync()
+    {
+        await LoadOrganizations();
+    }
+}
+
+<style>
+    .org-selector {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .org-selector label {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .org-selector select {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        min-width: 200px;
+    }
+
+    .loading-text {
+        color: #666;
+        font-style: italic;
+    }
+</style>
+

@@ -1,0 +1,41 @@
+@inject IAdminContext AdminContext
+
+<nav class="nav-menu">
+    <div class="nav-item">
+        <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            <i class="bi bi-grid-fill"></i>
+            <span>Dashboard</span>
+        </NavLink>
+    </div>
+
+    @if (AdminContext.IsRootUser)
+    {
+        <div class="nav-item">
+            <NavLink class="nav-link" href="organizations">
+                <i class="bi bi-diagram-3-fill"></i>
+                <span>Organizations</span>
+            </NavLink>
+        </div>
+    }
+
+    <div class="nav-item">
+        <NavLink class="nav-link" href="roles">
+            <i class="bi bi-person-badge-fill"></i>
+            <span>Roles</span>
+        </NavLink>
+    </div>
+
+    <div class="nav-item">
+        <NavLink class="nav-link" href="scopes">
+            <i class="bi bi-shield-check"></i>
+            <span>Scopes</span>
+        </NavLink>
+    </div>
+
+    <div class="nav-item">
+        <NavLink class="nav-link" href="sessions">
+            <i class="bi bi-collection-play-fill"></i>
+            <span>Sessions</span>
+        </NavLink>
+    </div>
+</nav>

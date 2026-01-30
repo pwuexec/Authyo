@@ -1,7 +1,7 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Organizations;
-using Authy.Presentation.Entitites;
-using Authy.Presentation.Persistence.Repositories;
+using Authy.Application.Domain;
+using Authy.Application.Domain.Organizations;
+using Authy.Application.Entitites;
+using Authy.Application.Data.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using NSubstitute;
@@ -120,3 +120,5 @@ public class GetOrganizationsQueryHandlerTests : TestBase
         Assert.IsTrue(result.Value.Exists(o => o.Name == orgName2));
     }
 }
+
+

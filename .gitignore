@@ -1,7 +1,26 @@
+*.txt
+
+# Visual Studio files
+.vs/
+[Tt]est[Rr]esults/
+*.suo
+*.user
+*.userosscache
+*.sln.doccache
+
+# Build folders
 bin/
 obj/
-/packages/
+
+# Rider/JetBrains
+.idea/
 riderModule.iml
 /_ReSharper.Caches/
+
+# Coverage
 coverage/
-TestResults/
+
+# Databases
+*.db
+*.db-shm
+*.db-wal

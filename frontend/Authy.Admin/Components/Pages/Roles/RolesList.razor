@@ -1,0 +1,239 @@
+@page "/roles"
+@page "/organizations/{OrgId:guid}/roles"
+@inject IDispatcher Dispatcher
+@inject IAdminContext AdminContext
+@inject NavigationManager Navigation
+@using Authy.Application.Domain.Organizations
+@using Authy.Application.Domain.Roles
+
+<PageTitle>Roles - Authy Admin</PageTitle>
+
+<h1>Roles</h1>
+
+<Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
+
+@if (!OrgId.HasValue)
+{
+    <OrganizationSelector @ref="orgSelector"
+                          SelectedOrganizationId="@selectedOrgId"
+                          OnSelectionChanged="OnOrganizationSelected" />
+}
+else
+{
+    <div class="breadcrumb">
+        <a href="/organizations">Organizations</a> / <a href="/organizations/@OrgId">@selectedOrgName</a> / Roles
+    </div>
+}
+
+@if (selectedOrgId.HasValue)
+{
+    <div class="actions-bar">
+        <a href="@GetCreateRoleUrl()" class="btn btn-primary">Create New Role</a>
+    </div>
+
+    <DataTable Items="roles" IsLoading="isLoading" TItem="GetRolesOutput" EmptyMessage="No roles found for this organization.">
+        <HeaderTemplate>
+            <th>Name</th>
+            <th>Scopes</th>
+            <th>Actions</th>
+        </HeaderTemplate>
+        <RowTemplate Context="role">
+            <td><strong>@role.Name</strong></td>
+            <td>
+                <div class="scope-badges">
+                    @foreach (var scope in role.Scopes.Take(3))
+                    {
+                        <span class="scope-badge">@scope.Name</span>
+                    }
+                    @if (role.Scopes.Count > 3)
+                    {
+                        <span class="scope-badge more">+@(role.Scopes.Count - 3) more</span>
+                    }
+                </div>
+            </td>
+            <td>
+                <a href="@GetEditRoleUrl(role.Name)" class="btn btn-sm btn-secondary">Edit</a>
+            </td>
+        </RowTemplate>
+    </DataTable>
+}
+else
+{
+    <p class="select-org-message">Please select an organization to view its roles.</p>
+}
+
+@code {
+    [Parameter] public Guid? OrgId { get; set; }
+
+    private OrganizationSelector? orgSelector;
+    private Guid? selectedOrgId;
+    private string selectedOrgName = string.Empty;
+    private List<GetRolesOutput> roles = new();
+    private bool isLoading = false;
+
+    private bool showAlert = false;
+    private string alertMessage = string.Empty;
+    private Alert.AlertType alertType = Alert.AlertType.Info;
+
+    // Mock user ID for authorization
+    private readonly Guid mockUserId = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e");
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (OrgId.HasValue)
+        {
+            selectedOrgId = OrgId.Value;
+            await LoadOrgNameAndRoles();
+        }
+    }
+
+    private async Task LoadOrgNameAndRoles()
+    {
+        if (!selectedOrgId.HasValue) return;
+
+        // Get organization name if we came from a direct URL
+        if (string.IsNullOrEmpty(selectedOrgName))
+        {
+            var orgsResult = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
+            if (orgsResult.IsSuccess)
+            {
+                var org = orgsResult.Value.FirstOrDefault(o => o.Id == selectedOrgId.Value);
+                if (org != null)
+                {
+                    selectedOrgName = org.Name;
+                }
+            }
+        }
+
+        await LoadRoles();
+    }
+
+    private async Task OnOrganizationSelected(GetOrganizationsOutput? org)
+    {
+        if (org == null)
+        {
+            selectedOrgId = null;
+            selectedOrgName = string.Empty;
+            roles = new();
+            return;
+        }
+
+        selectedOrgId = org.Id;
+        selectedOrgName = org.Name;
+        await LoadRoles();
+    }
+
+    private async Task LoadRoles()
+    {
+        if (!selectedOrgId.HasValue) return;
+
+        isLoading = true;
+        var result = await Dispatcher.DispatchAsync(
+            new GetRolesQuery(selectedOrgId.Value, mockUserId),
+            CancellationToken.None);
+
+        if (result.IsSuccess)
+        {
+            roles = result.Value;
+        }
+        else
+        {
+            ShowAlert($"Error loading roles: {result.Error.Description}", Alert.AlertType.Error);
+        }
+        isLoading = false;
+    }
+
+    private string GetCreateRoleUrl()
+    {
+        return OrgId.HasValue
+            ? $"/organizations/{OrgId}/roles/new"
+            : $"/organizations/{selectedOrgId}/roles/new";
+    }
+
+    private string GetEditRoleUrl(string roleName)
+    {
+        return OrgId.HasValue
+            ? $"/organizations/{OrgId}/roles/{Uri.EscapeDataString(roleName)}/edit"
+            : $"/organizations/{selectedOrgId}/roles/{Uri.EscapeDataString(roleName)}/edit";
+    }
+
+    private void ShowAlert(string message, Alert.AlertType type)
+    {
+        alertMessage = message;
+        alertType = type;
+        showAlert = true;
+    }
+}
+
+<style>
+    .breadcrumb {
+        margin-bottom: 1rem;
+        color: #666;
+    }
+
+    .breadcrumb a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .actions-bar {
+        margin-bottom: 1rem;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: none;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    .scope-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25rem;
+    }
+
+    .scope-badge {
+        background: #e9ecef;
+        color: #495057;
+        padding: 0.2rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+    }
+
+    .scope-badge.more {
+        background: #6c757d;
+        color: white;
+    }
+
+    .select-org-message {
+        color: #666;
+        text-align: center;
+        padding: 2rem;
+        background: white;
+        border-radius: 8px;
+    }
+</style>
+

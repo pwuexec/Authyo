@@ -1,0 +1,136 @@
+@page "/organizations"
+@inject IDispatcher Dispatcher
+@inject IAdminContext AdminContext
+@inject NavigationManager Navigation
+@using Authy.Application.Domain.Organizations
+@rendermode InteractiveServer
+
+<PageTitle>Organizations - Authy Admin</PageTitle>
+
+<h1>Organizations</h1>
+
+@if (!AdminContext.IsRootUser)
+{
+    <Alert Type="Alert.AlertType.Error" Visible="true" Dismissible="false"
+           Message="Access denied. Only root users can manage organizations." />
+}
+else
+{
+    <Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
+
+    <div class="create-form">
+        <h3>Create Organization</h3>
+        <EditForm Model="@this" OnValidSubmit="CreateOrganization" FormName="createOrgForm">
+            <div class="form-group">
+                <input type="text" @bind="newOrgName" placeholder="Organization name" class="form-input" />
+                <button type="submit" class="btn btn-primary" disabled="@isCreating">
+                    @if (isCreating)
+                    {
+                        <span>Creating...</span>
+                    }
+                    else
+                    {
+                        <span>Create</span>
+                    }
+                </button>
+            </div>
+        </EditForm>
+    </div>
+
+    <DataTable Items="organizations" IsLoading="isLoading" TItem="GetOrganizationsOutput" EmptyMessage="No organizations found.">
+        <HeaderTemplate>
+            <th>Name</th>
+            <th>ID</th>
+            <th>Actions</th>
+        </HeaderTemplate>
+        <RowTemplate Context="org">
+            <td>@org.Name</td>
+            <td><code>@org.Id</code></td>
+            <td>
+                <a href="/organizations/@org.Id" class="btn btn-sm btn-secondary">View Details</a>
+            </td>
+        </RowTemplate>
+    </DataTable>
+}
+
+@code {
+    private List<GetOrganizationsOutput> organizations = new();
+    private bool isLoading = true;
+    private bool isCreating = false;
+    private string newOrgName = string.Empty;
+
+    private bool showAlert = false;
+    private string alertMessage = string.Empty;
+    private Alert.AlertType alertType = Alert.AlertType.Info;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AdminContext.IsRootUser)
+        {
+            await LoadOrganizations();
+        }
+        else
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadOrganizations()
+    {
+        isLoading = true;
+        var result = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
+        if (result.IsSuccess)
+        {
+            organizations = result.Value;
+        }
+        else
+        {
+            ShowAlert($"Error loading organizations: {result.Error.Description}", Alert.AlertType.Error);
+        }
+        isLoading = false;
+    }
+
+    private async Task CreateOrganization()
+    {
+        if (string.IsNullOrWhiteSpace(newOrgName))
+        {
+            ShowAlert("Organization name is required.", Alert.AlertType.Warning);
+            return;
+        }
+
+        isCreating = true;
+        StateHasChanged();
+
+        try
+        {
+            var result = await Dispatcher.DispatchAsync(new CreateOrganizationCommand(newOrgName), CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                ShowAlert($"Organization '{result.Value.Name}' created successfully!", Alert.AlertType.Success);
+                newOrgName = string.Empty;
+                await LoadOrganizations();
+            }
+            else
+            {
+                ShowAlert($"Error creating organization: {result.Error.Description}", Alert.AlertType.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            ShowAlert($"Error: {ex.Message}", Alert.AlertType.Error);
+        }
+        finally
+        {
+            isCreating = false;
+        }
+    }
+
+    private void ShowAlert(string message, Alert.AlertType type)
+    {
+        alertMessage = message;
+        alertType = type;
+        showAlert = true;
+    }
+}
+

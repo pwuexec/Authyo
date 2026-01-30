@@ -1,0 +1,241 @@
+@page "/organizations/{OrgId:guid}"
+@inject IDispatcher Dispatcher
+@inject IAdminContext AdminContext
+@inject NavigationManager Navigation
+@using Authy.Application.Domain.Organizations
+@using Authy.Application.Domain.Roles
+@using Authy.Application.Domain.Scopes
+
+<PageTitle>Organization Details - Authy Admin</PageTitle>
+
+@if (!AdminContext.IsRootUser)
+{
+    <Alert Type="Alert.AlertType.Error" Visible="true" Dismissible="false"
+           Message="Access denied. Only root users can view organization details." />
+}
+else if (isLoading)
+{
+    <LoadingSpinner IsLoading="true" Message="Loading organization..." />
+}
+else if (organization == null)
+{
+    <Alert Type="Alert.AlertType.Error" Visible="true" Dismissible="false"
+           Message="Organization not found." />
+}
+else
+{
+    <div class="breadcrumb">
+        <a href="/organizations">Organizations</a> / @organization.Name
+    </div>
+
+    <h1>@organization.Name</h1>
+    <p class="org-id"><strong>ID:</strong> <code>@organization.Id</code></p>
+
+    <div class="detail-sections">
+        <div class="detail-section">
+            <h2>Roles (@roles.Count)</h2>
+            <a href="/organizations/@OrgId/roles" class="btn btn-primary">Manage Roles</a>
+            @if (roles.Any())
+            {
+                <ul class="item-list">
+                    @foreach (var role in roles.Take(5))
+                    {
+                        <li>
+                            <span class="item-name">@role.Name</span>
+                            <span class="item-detail">@role.Scopes.Count scopes</span>
+                        </li>
+                    }
+                    @if (roles.Count > 5)
+                    {
+                        <li class="more-items">...and @(roles.Count - 5) more</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="empty-message">No roles defined yet.</p>
+            }
+        </div>
+
+        <div class="detail-section">
+            <h2>Scopes (@scopes.Count)</h2>
+            <a href="/organizations/@OrgId/scopes" class="btn btn-primary">Manage Scopes</a>
+            @if (scopes.Any())
+            {
+                <ul class="item-list">
+                    @foreach (var scope in scopes.Take(5))
+                    {
+                        <li>
+                            <span class="item-name">@scope.Name</span>
+                            <span class="item-detail">@scope.Roles.Count roles</span>
+                        </li>
+                    }
+                    @if (scopes.Count > 5)
+                    {
+                        <li class="more-items">...and @(scopes.Count - 5) more</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <p class="empty-message">No scopes defined yet.</p>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Guid OrgId { get; set; }
+
+    private GetOrganizationsOutput? organization;
+    private List<GetRolesOutput> roles = new();
+    private List<GetScopesOutput> scopes = new();
+    private bool isLoading = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!AdminContext.IsRootUser)
+        {
+            isLoading = false;
+            return;
+        }
+
+        await LoadOrganizationDetails();
+    }
+
+    private async Task LoadOrganizationDetails()
+    {
+        isLoading = true;
+
+        // Load organizations to find the one we need
+        var orgsResult = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
+        if (orgsResult.IsSuccess)
+        {
+            organization = orgsResult.Value.FirstOrDefault(o => o.Id == OrgId);
+        }
+
+        if (organization != null)
+        {
+            // We need a user ID to query roles and scopes - use mock user ID for now
+            var mockUserId = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e");
+
+            var rolesTask = Dispatcher.DispatchAsync(new GetRolesQuery(OrgId, mockUserId), CancellationToken.None);
+            var scopesTask = Dispatcher.DispatchAsync(new GetScopesQuery(OrgId, mockUserId), CancellationToken.None);
+
+            await Task.WhenAll(rolesTask, scopesTask);
+
+            if (rolesTask.Result.IsSuccess)
+            {
+                roles = rolesTask.Result.Value;
+            }
+
+            if (scopesTask.Result.IsSuccess)
+            {
+                scopes = scopesTask.Result.Value;
+            }
+        }
+
+        isLoading = false;
+    }
+}
+
+<style>
+    .breadcrumb {
+        margin-bottom: 1rem;
+        color: #666;
+    }
+
+    .breadcrumb a {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .breadcrumb a:hover {
+        text-decoration: underline;
+    }
+
+    .org-id {
+        color: #666;
+        margin-bottom: 2rem;
+    }
+
+    .org-id code {
+        background: #f4f4f4;
+        padding: 0.2rem 0.4rem;
+        border-radius: 3px;
+        font-size: 0.9rem;
+    }
+
+    .detail-sections {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2rem;
+    }
+
+    .detail-section {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .detail-section h2 {
+        margin: 0 0 1rem 0;
+        color: #333;
+        font-size: 1.2rem;
+    }
+
+    .btn {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        text-decoration: none;
+        margin-bottom: 1rem;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+    }
+
+    .item-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .item-list li {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .item-list li:last-child {
+        border-bottom: none;
+    }
+
+    .item-name {
+        font-weight: 500;
+    }
+
+    .item-detail {
+        color: #666;
+        font-size: 0.85rem;
+    }
+
+    .more-items {
+        color: #666;
+        font-style: italic;
+    }
+
+    .empty-message {
+        color: #666;
+        font-style: italic;
+    }
+</style>
+

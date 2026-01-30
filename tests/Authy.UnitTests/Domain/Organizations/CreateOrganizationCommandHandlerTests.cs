@@ -1,6 +1,6 @@
-using Authy.Presentation.Domain;
-using Authy.Presentation.Domain.Organizations;
-using Authy.Presentation.Persistence.Repositories;
+using Authy.Application.Domain;
+using Authy.Application.Domain.Organizations;
+using Authy.Application.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
@@ -86,3 +86,4 @@ public class CreateOrganizationCommandHandlerTests : TestBase
         Assert.IsNotNull(orgInDb);
     }
 }
+

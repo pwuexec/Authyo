@@ -1,0 +1,132 @@
+@page "/"
+@inject IDispatcher Dispatcher
+@inject IAdminContext AdminContext
+@using Authy.Application.Domain.Organizations
+
+<PageTitle>Dashboard - Authy Admin</PageTitle>
+
+<h1>Dashboard</h1>
+
+<div class="welcome-section">
+    <p>Welcome to the Authy Admin Dashboard.</p>
+    @if (AdminContext.IsRootUser)
+    {
+        <p class="root-notice">You are accessing as a <strong>root user</strong> with full administrative privileges.</p>
+    }
+</div>
+
+@if (isLoading)
+{
+    <LoadingSpinner IsLoading="true" Message="Loading statistics..." />
+}
+else
+{
+    <div class="stats-grid">
+        @if (AdminContext.IsRootUser)
+        {
+            <div class="stat-card">
+                <h3>Organizations</h3>
+                <div class="stat-value">@organizationCount</div>
+                <a href="/organizations" class="stat-link">Manage Organizations</a>
+            </div>
+        }
+
+        <div class="stat-card">
+            <h3>Roles</h3>
+            <div class="stat-value">-</div>
+            <a href="/roles" class="stat-link">Manage Roles</a>
+        </div>
+
+        <div class="stat-card">
+            <h3>Scopes</h3>
+            <div class="stat-value">-</div>
+            <a href="/scopes" class="stat-link">Manage Scopes</a>
+        </div>
+
+        <div class="stat-card">
+            <h3>Sessions</h3>
+            <div class="stat-value">-</div>
+            <a href="/sessions" class="stat-link">View Sessions</a>
+        </div>
+    </div>
+
+    <div class="quick-actions">
+        <h2>Quick Actions</h2>
+        <div class="action-buttons">
+            @if (AdminContext.IsRootUser)
+            {
+                <a href="/organizations" class="action-btn">
+                    <span class="action-icon">+</span>
+                    <span>Create Organization</span>
+                </a>
+            }
+            <a href="/roles" class="action-btn">
+                <span class="action-icon">+</span>
+                <span>Create Role</span>
+            </a>
+            <a href="/scopes" class="action-btn">
+                <span class="action-icon">+</span>
+                <span>Create Scope</span>
+            </a>
+            <a href="/sessions" class="action-btn">
+                <span class="action-icon">~</span>
+                <span>View Sessions</span>
+            </a>
+        </div>
+    </div>
+
+    @if (AdminContext.IsRootUser && organizations.Any())
+    {
+        <div class="recent-section">
+            <h2>Organizations</h2>
+            <table class="simple-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>ID</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var org in organizations.Take(5))
+                    {
+                        <tr>
+                            <td><strong>@org.Name</strong></td>
+                            <td><code>@org.Id</code></td>
+                            <td>
+                                <a href="/organizations/@org.Id" class="link">View</a> |
+                                <a href="/organizations/@org.Id/roles" class="link">Roles</a> |
+                                <a href="/organizations/@org.Id/scopes" class="link">Scopes</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            @if (organizations.Count > 5)
+            {
+                <a href="/organizations" class="view-all-link">View all @organizations.Count organizations</a>
+            }
+        </div>
+    }
+}
+
+@code {
+    private List<GetOrganizationsOutput> organizations = new();
+    private int organizationCount = 0;
+    private bool isLoading = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AdminContext.IsRootUser)
+        {
+            var result = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
+            if (result.IsSuccess)
+            {
+                organizations = result.Value;
+                organizationCount = organizations.Count;
+            }
+        }
+        isLoading = false;
+    }
+}
+

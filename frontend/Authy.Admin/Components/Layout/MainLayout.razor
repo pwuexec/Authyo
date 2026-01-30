@@ -1,0 +1,39 @@
+@inherits LayoutComponentBase
+@inject IAdminContext AdminContext
+
+<div class="app-layout">
+    <aside class="app-sidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-shield-lock-fill"></i> Authy Admin
+        </div>
+        <NavMenu />
+    </aside>
+
+    <header class="app-header">
+        <div class="header-title">
+            <!-- Breadcrumbs or Page Title could go here -->
+            Dashboard
+        </div>
+        <div class="header-actions">
+            @if (AdminContext.IsRootUser)
+            {
+                <span class="root-badge">Root User</span>
+            }
+            <a href="https://github.com/pwuexec/Authyo" target="_blank" class="btn btn-sm btn-secondary">
+                <i class="bi bi-github"></i> GitHub
+            </a>
+        </div>
+    </header>
+
+    <main class="app-content">
+        <div class="content-container">
+            @Body
+        </div>
+    </main>
+</div>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">X</span>
+</div>
