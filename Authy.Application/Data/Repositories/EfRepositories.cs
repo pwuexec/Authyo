@@ -100,10 +100,18 @@ public class UserRepository(AuthyDbContext dbContext) : IUserRepository
     public Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return dbContext.Users
-            .Include(u => u.Roles)
-            .ThenInclude(r => r.Scopes)
-            .Include(u => u.Organization)
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
+    }
+
+    public Task<List<string>> GetScopesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return dbContext.Users
+            .Where(u => u.Id == userId)
+            .SelectMany(u => u.Roles)
+            .SelectMany(r => r.Scopes)
+            .Select(s => s.Name)
+            .Distinct()
+            .ToListAsync(cancellationToken);
     }
 }
 

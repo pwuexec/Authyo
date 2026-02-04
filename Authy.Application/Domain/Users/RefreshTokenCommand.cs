@@ -63,11 +63,7 @@ public class RefreshTokenCommandHandler(
 
         storedRefreshToken.RevokedOn = utcNow;
         
-        var scopes = user.Roles
-            .SelectMany(r => r.Scopes)
-            .Select(s => s.Name)
-            .Distinct()
-            .ToList();
+        var scopes = await userRepository.GetScopesAsync(user.Id, cancellationToken);
 
         var (newAccessToken, newJti) = jwtService.GenerateToken(user.Id, user.Name, scopes);
 

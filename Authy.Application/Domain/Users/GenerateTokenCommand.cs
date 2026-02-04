@@ -27,11 +27,7 @@ public class GenerateTokenCommandHandler(
         }
 
         // Aggregate all scopes from all roles
-        var scopes = user.Roles
-            .SelectMany(r => r.Scopes)
-            .Select(s => s.Name)
-            .Distinct()
-            .ToList();
+        var scopes = await userRepository.GetScopesAsync(user.Id, cancellationToken);
 
         var (accessToken, jti) = jwtService.GenerateToken(user.Id, user.Name, scopes);
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;

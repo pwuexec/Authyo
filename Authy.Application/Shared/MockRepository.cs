@@ -36,6 +36,12 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
         return Task.FromResult(Users.FirstOrDefault(u => u.Id == id));
     }
 
+    Task<List<string>> IUserRepository.GetScopesAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var user = Users.FirstOrDefault(u => u.Id == userId);
+        return Task.FromResult(user?.Roles.SelectMany(r => r.Scopes).Select(s => s.Name).Distinct().ToList() ?? new List<string>());
+    }
+
     Task<Organization?> IOrganizationRepository.GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return Task.FromResult(Organizations.FirstOrDefault(o => o.Id == id));
