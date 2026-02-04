@@ -14,7 +14,7 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
         { 
             Id = Guid.Parse("31052a63-0ade-4b14-bada-1ea2fc1ae40a"), 
             Name = "Test Org",
-            Owners = new List<User> { new() { Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e") } }
+            Owners = new List<User> { new() { Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e"), Name = "Test User" } }
         }
     };
 
