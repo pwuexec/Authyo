@@ -7,6 +7,7 @@ using Authy.Application.Shared;
 using Authy.Application.Shared.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Authy.UnitTests.Shared;
@@ -18,7 +19,7 @@ public class AuthorizationServiceTests : TestBase
     private IUserRepository _userRepository = null!;
     private IOrganizationRepository _organizationRepository = null!;
     private IHttpContextAccessor _httpContextAccessor = null!;
-    private IConfiguration _configuration = null!;
+    private IOptions<RootIpOptions> _options = null!;
 
     [TestInitialize]
     public override void Setup()
@@ -28,14 +29,15 @@ public class AuthorizationServiceTests : TestBase
         _userRepository = new UserRepository(DbContext);
         _organizationRepository = new OrganizationRepository(DbContext);
         _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
-        _configuration = Substitute.For<IConfiguration>();
+        _options = Substitute.For<IOptions<RootIpOptions>>();
+        _options.Value.Returns(new RootIpOptions());
 
         var context = new DefaultHttpContext();
         _httpContextAccessor.HttpContext.Returns(context);
 
         _sut = new AuthorizationService(
             _httpContextAccessor,
-            _configuration,
+            _options,
             _organizationRepository,
             _userRepository);
     }
