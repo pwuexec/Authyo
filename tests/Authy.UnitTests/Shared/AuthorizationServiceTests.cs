@@ -14,11 +14,11 @@ namespace Authy.UnitTests.Shared;
 [TestClass]
 public class AuthorizationServiceTests : TestBase
 {
-    private AuthorizationService _sut;
-    private IUserRepository _userRepository;
-    private IOrganizationRepository _organizationRepository;
-    private IHttpContextAccessor _httpContextAccessor;
-    private IConfiguration _configuration;
+    private AuthorizationService _sut = null!;
+    private IUserRepository _userRepository = null!;
+    private IOrganizationRepository _organizationRepository = null!;
+    private IHttpContextAccessor _httpContextAccessor = null!;
+    private IConfiguration _configuration = null!;
 
     [TestInitialize]
     public override void Setup()

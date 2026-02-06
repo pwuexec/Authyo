@@ -42,7 +42,7 @@ public class AuthorizationService(
             return Result.Success();
         }
 
-        var organizationId = await userRepository.GetOrganizationIdAsync(targetUserId, cancellationToken);
+        var organizationId = await userRepository.GetOrganizationUserIdAsync(targetUserId, cancellationToken);
         if (organizationId == null)
         {
             return Result.Failure(DomainErrors.User.NotFound);
