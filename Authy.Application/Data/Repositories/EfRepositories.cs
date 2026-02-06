@@ -25,6 +25,7 @@ public class ScopeRepository(AuthyDbContext dbContext) : IScopeRepository
     public Task<List<Scope>> GetByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken)
     {
         return dbContext.Scopes
+            .AsNoTracking()
             .Include(s => s.Roles)
             .Where(s => s.OrganizationId == organizationId)
             .ToListAsync(cancellationToken);

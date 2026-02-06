@@ -10,14 +10,13 @@ public static class HttpContextExtensions
         return Guid.TryParse(value, out var result) ? result : null;
     }
 
-    public static Result EnsureRootIp(this HttpContext? httpContext, IConfiguration configuration)
+    public static Result EnsureRootIp(this HttpContext? httpContext, string[] rootIps)
     {
         if (httpContext == null)
         {
             return Result.Failure(DomainErrors.User.UnauthorizedIp);
         }
 
-        var rootIps = configuration.GetSection("RootIps").Get<string[]>() ?? Array.Empty<string>();
         var remoteIp = httpContext.Connection.RemoteIpAddress;
         
         if (remoteIp == null)
