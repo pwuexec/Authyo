@@ -103,6 +103,14 @@ public class UserRepository(AuthyDbContext dbContext) : IUserRepository
             .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 
+    public Task<Guid?> GetOrganizationIdAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        return dbContext.Users
+            .Where(u => u.Id == userId)
+            .Select(u => (Guid?)u.OrganizationId)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public Task<List<string>> GetScopesAsync(Guid userId, CancellationToken cancellationToken)
     {
         return dbContext.Users
