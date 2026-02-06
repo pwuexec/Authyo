@@ -1,8 +1,8 @@
 # AI Agent Guidelines for Authy Project
 
-This document outlines the standards and conventions for AI agents working on the Authy codebase, specifically regarding testing.
+This document outlines the standards and conventions for AI agents working on the Authy codebase, specifically regarding unit testing.
 
-## Testing Standards
+## Unit Testing Standards
 
 ### Frameworks & Tools
 *   **Test Framework:** MSTest
@@ -30,6 +30,7 @@ This document outlines the standards and conventions for AI agents working on th
     *   Override `Setup()` (decorated with `[TestInitialize]`) to initialize your subject under test (SUT) and dependencies. Call `base.Setup()` first.
 *   **Mocking:** Use `NSubstitute` to mock interfaces (e.g., `IJwtService`, `IHttpContextAccessor`).
 *   **Time-Dependent Tests:** Use the `TimeProvider` property from `TestBase` (or inject `FakeTimeProvider`) to control time deterministically.
+*   **Constants:** Use `const` for test data values that do not change to improve readability and prevent magic strings.
 
 ### Example
 
@@ -58,7 +59,7 @@ public class ExampleTests : TestBase
     public async Task Handle_Should_ReturnSuccess_When_Valid()
     {
         // Arrange
-        var input = "valid";
+        const string input = "valid";
 
         // Act
         var result = await _handler.Handle(input);
