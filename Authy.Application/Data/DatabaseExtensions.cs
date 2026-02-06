@@ -38,20 +38,23 @@ public static class DatabaseExtensions
         return services;
     }
 
-    public static T EnsureDatabaseCreated<T>(this T app) where T : IApplicationBuilder
+    extension<T>(T app) where T : IApplicationBuilder
     {
-        using var scope = app.ApplicationServices.CreateScope();
-        var context = scope.ServiceProvider.GetService<AuthyDbContext>();
-        context?.Database.EnsureCreated();
-        return app;
-    }
+        public T EnsureDatabaseCreated()
+        {
+            using var scope = app.ApplicationServices.CreateScope();
+            var context = scope.ServiceProvider.GetService<AuthyDbContext>();
+            context?.Database.EnsureCreated();
+            return app;
+        }
 
-    public static T ApplyMigrations<T>(this T app) where T : IApplicationBuilder
-    {
-        using var scope = app.ApplicationServices.CreateScope();
-        var context = scope.ServiceProvider.GetService<AuthyDbContext>();
-        context?.Database.Migrate();
-        return app;
+        public T ApplyMigrations()
+        {
+            using var scope = app.ApplicationServices.CreateScope();
+            var context = scope.ServiceProvider.GetService<AuthyDbContext>();
+            context?.Database.Migrate();
+            return app;
+        }
     }
 }
 
