@@ -2,8 +2,9 @@ using Authy.Application.Domain;
 using Authy.Application.Domain.Organizations;
 using Authy.Application.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Authy.Application.Shared;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Authy.UnitTests.Domain.Organizations;
@@ -12,24 +13,14 @@ namespace Authy.UnitTests.Domain.Organizations;
 public class CreateOrganizationCommandHandlerTests : TestBase
 {
     private readonly IHttpContextAccessor _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
-    private readonly IConfiguration _configuration;
+    private readonly IOptions<RootIpOptions> _rootIpOptions = Substitute.For<IOptions<RootIpOptions>>();
     private OrganizationRepository _organizationRepository = null!;
     private CreateOrganizationCommandHandler _handler = null!;
 
     public CreateOrganizationCommandHandlerTests()
     {
         const string localIp = "127.0.0.1";
-        const string rootIpConfigKey = "RootIps:0";
-
-        // Use real configuration for easier array binding
-        var myConfiguration = new Dictionary<string, string?>
-        {
-            { rootIpConfigKey, localIp }
-        };
-
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(myConfiguration)
-            .Build();
+        _rootIpOptions.Value.Returns(new RootIpOptions { RootIps = [localIp] });
     }
 
     [TestInitialize]
@@ -37,7 +28,7 @@ public class CreateOrganizationCommandHandlerTests : TestBase
     {
         base.Setup();
         _organizationRepository = new OrganizationRepository(DbContext);
-        _handler = new CreateOrganizationCommandHandler(_httpContextAccessor, _configuration, _organizationRepository);
+        _handler = new CreateOrganizationCommandHandler(_httpContextAccessor, _rootIpOptions, _organizationRepository);
     }
 
     [TestMethod]

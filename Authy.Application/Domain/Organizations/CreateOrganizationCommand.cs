@@ -1,6 +1,8 @@
 using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Extensions;
+using Authy.Application.Shared;
 using Authy.Application.Shared.Abstractions;
+using Microsoft.Extensions.Options;
 
 namespace Authy.Application.Domain.Organizations;
 
@@ -8,7 +10,7 @@ public record CreateOrganizationCommand(string Name) : ICommand<Result<Organizat
 
 public class CreateOrganizationCommandHandler(
     IHttpContextAccessor httpContextAccessor,
-    IConfiguration configuration,
+    IOptions<RootIpOptions> rootIpOptions,
     IOrganizationRepository organizationRepository)
     : ICommandHandler<CreateOrganizationCommand, Result<Organization>>
 {
@@ -20,7 +22,7 @@ public class CreateOrganizationCommandHandler(
             return validationFailure;
         }
 
-        var authResult = httpContextAccessor.HttpContext.EnsureRootIp(configuration);
+        var authResult = httpContextAccessor.HttpContext.EnsureRootIp(rootIpOptions.Value.RootIps);
         if (authResult.IsFailure)
         {
             return Result.Failure<Organization>(authResult.Error);

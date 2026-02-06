@@ -2,8 +2,9 @@ using Authy.Application.Domain;
 using Authy.Application.Domain.Organizations;
 using Authy.Application.Entitites;
 using Authy.Application.Data.Repositories;
+using Authy.Application.Shared;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Authy.UnitTests.Domain.Organizations;
@@ -12,7 +13,7 @@ namespace Authy.UnitTests.Domain.Organizations;
 public class GetOrganizationsQueryHandlerTests : TestBase
 {
     private readonly IHttpContextAccessor _httpContextAccessor = Substitute.For<IHttpContextAccessor>();
-    private IConfiguration _configuration = null!;
+    private IOptions<RootIpOptions> _rootIpOptions = null!;
     private OrganizationRepository _organizationRepository = null!;
     private GetOrganizationsQueryHandler _handler = null!;
 
@@ -22,19 +23,12 @@ public class GetOrganizationsQueryHandlerTests : TestBase
         base.Setup();
         
         const string localIp = "127.0.0.1";
-        const string rootIpConfigKey = "RootIps:0";
         
-        var myConfiguration = new Dictionary<string, string?>
-        {
-            {rootIpConfigKey, localIp}
-        };
-
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(myConfiguration)
-            .Build();
+        _rootIpOptions = Substitute.For<IOptions<RootIpOptions>>();
+        _rootIpOptions.Value.Returns(new RootIpOptions { RootIps = [localIp] });
 
         _organizationRepository = new OrganizationRepository(DbContext);
-        _handler = new GetOrganizationsQueryHandler(_organizationRepository, _httpContextAccessor, _configuration);
+        _handler = new GetOrganizationsQueryHandler(_organizationRepository, _httpContextAccessor, _rootIpOptions);
     }
 
     [TestMethod]

@@ -5,7 +5,7 @@ using Authy.Presentation.Extensions;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services
-    .AddApplication()
+    .AddApplication(builder.Configuration)
     .AddPersistence(builder.Configuration)
     .AddPresentation(builder.Configuration);
 

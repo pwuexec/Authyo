@@ -1,7 +1,8 @@
 using System.Net;
 using Authy.Admin.Services;
+using Authy.Application.Shared;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Authy.UnitTests.Admin;
@@ -10,7 +11,6 @@ namespace Authy.UnitTests.Admin;
 public class AdminContextTests
 {
     private IHttpContextAccessor _httpContextAccessor = null!;
-    private IConfiguration _configuration = null!;
     private HttpContext _httpContext = null!;
 
     [TestInitialize]
@@ -23,18 +23,10 @@ public class AdminContextTests
 
     private AdminContext CreateAdminContext(string[] rootIps)
     {
-        var configData = new Dictionary<string, string?>
-        {
-            { "RootIps:0", rootIps.Length > 0 ? rootIps[0] : null },
-            { "RootIps:1", rootIps.Length > 1 ? rootIps[1] : null },
-            { "RootIps:2", rootIps.Length > 2 ? rootIps[2] : null }
-        };
+        var options = Substitute.For<IOptions<RootIpOptions>>();
+        options.Value.Returns(new RootIpOptions { RootIps = rootIps });
 
-        _configuration = new ConfigurationBuilder()
-            .AddInMemoryCollection(configData.Where(x => x.Value != null)!)
-            .Build();
-
-        return new AdminContext(_httpContextAccessor, _configuration);
+        return new AdminContext(_httpContextAccessor, options);
     }
 
     [TestMethod]
