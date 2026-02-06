@@ -16,7 +16,7 @@ public static class AdminExtensions
             .Services
             .AddHttpContextAccessor()
             .AddScoped<IAdminContext, AdminContext>()
-            .AddApplication()
+            .AddApplication(configuration)
             .AddPersistence(configuration)
             .AddHandlers(typeof(AdminExtensions).Assembly);
 
