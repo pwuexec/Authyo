@@ -43,13 +43,12 @@ public class AuthorizationService(
             return Result.Success();
         }
 
-        var targetUser = await userRepository.GetByIdAsync(targetUserId, cancellationToken);
-        if (targetUser == null)
+        var organizationId = await userRepository.GetOrganizationUserIdAsync(targetUserId, cancellationToken);
+        if (organizationId == null)
         {
             return Result.Failure(DomainErrors.User.NotFound);
         }
 
-        return await EnsureRootIpOrOwnerAsync(targetUser.OrganizationId, requestingUserId, cancellationToken);
+        return await EnsureRootIpOrOwnerAsync(organizationId.Value, requestingUserId, cancellationToken);
     }
 }
-
