@@ -1,13 +1,13 @@
+using Authy.Application.Data;
+using Authy.Application.Data.Repositories;
 using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Domain.Roles.Data;
 using Authy.Application.Domain.Scopes.Data;
 using Authy.Application.Domain.Users.Data;
 using Authy.Application.Shared.Abstractions;
-using Authy.Application.Extensions;
-using Authy.Application.Data.Repositories;
 using Microsoft.EntityFrameworkCore;
 
-namespace Authy.Application.Data;
+namespace Authy.Application.Extensions;
 
 public static class DatabaseExtensions
 {
@@ -18,7 +18,7 @@ public static class DatabaseExtensions
         if (provider == "Sqlite")
         {
             var connectionString = configuration["Persistence:ConnectionString"] ?? "Data Source=authy.db";
-            
+
             services.AddDbContext<AuthyDbContext>(options =>
                 options.UseSqlite(connectionString));
 
@@ -28,7 +28,8 @@ public static class DatabaseExtensions
                 .AddScoped<IScopeRepository, ScopeRepository>()
                 .AddScoped<IUserRepository, UserRepository>()
                 .AddScoped<IRefreshTokenRepository, RefreshTokenRepository>()
-                .AddScoped<IUnitOfWork, UnitOfWork>();
+                .AddScoped<IUnitOfWork, UnitOfWork>()
+                .AddHostedService<DatabaseInitializer>();
         }
         else
         {
@@ -37,24 +38,4 @@ public static class DatabaseExtensions
 
         return services;
     }
-
-    extension<T>(T app) where T : IApplicationBuilder
-    {
-        public T EnsureDatabaseCreated()
-        {
-            using var scope = app.ApplicationServices.CreateScope();
-            var context = scope.ServiceProvider.GetService<AuthyDbContext>();
-            context?.Database.EnsureCreated();
-            return app;
-        }
-
-        public T ApplyMigrations()
-        {
-            using var scope = app.ApplicationServices.CreateScope();
-            var context = scope.ServiceProvider.GetService<AuthyDbContext>();
-            context?.Database.Migrate();
-            return app;
-        }
-    }
 }
-

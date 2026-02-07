@@ -9,7 +9,6 @@ using Authy.Application.Domain.Organizations;
 using Authy.Application.Domain.Roles;
 using Authy.Application.Domain.Scopes;
 using Authy.Application.Domain.Users;
-using Authy.Application.Data;
 
 namespace Authy.Presentation.Extensions;
 
@@ -45,8 +44,6 @@ public static class PresentationExtensions
 
     public static WebApplication UsePresentation(this WebApplication app)
     {
-        app.ApplyMigrations();
-
         if (app.Environment.IsDevelopment())
         {
             app.MapOpenApi();

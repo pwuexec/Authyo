@@ -1,5 +1,4 @@
 using Authy.Application.Extensions;
-using Authy.Application.Data;
 using Authy.Presentation.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);

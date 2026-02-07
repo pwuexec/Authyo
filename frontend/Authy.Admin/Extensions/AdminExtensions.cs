@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Builder;
 using Authy.Admin.Components;
 using Authy.Admin.Services;
 using Authy.Application.Extensions;
-using Authy.Application.Data;
 
 namespace Authy.Admin.Extensions;
 
@@ -25,8 +24,6 @@ public static class AdminExtensions
 
     public static WebApplication UseAdminMiddleware(this WebApplication app)
     {
-        app.ApplyMigrations();
-
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error", createScopeForErrors: true)
