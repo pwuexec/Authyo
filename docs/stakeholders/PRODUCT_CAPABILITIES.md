@@ -63,6 +63,22 @@ Features for defining roles and permissions within organizations.
     Retrieves all permission scopes defined for a specific organization.
     *   **Endpoint:** `GET /organization/{id}/scope`
 
+### Ownership & Administrative Permissions
+
+The platform distinguishes between organization owners and platform owners (root users).
+
+*   **Organization Owners**
+    Users assigned as owners of a specific organization can manage that organization's access model and users.
+    *   **Role/Scope Administration:** Create/update/list roles and scopes for their organization.
+    *   **User Administration:** Manage users only within their organization.
+    *   **User Session Administration:** View and revoke sessions for users within their organization (and their own sessions).
+
+*   **Platform Owner (Root User)**
+    The platform owner is identified by an allowed root IP address and has cross-tenant administrative privileges.
+    *   **Organization Administration:** Create and list organizations across the platform.
+    *   **User Administration:** Manage users in any organization.
+    *   **Cross-Organization Administration:** Manage roles/scopes and user sessions for any organization.
+
 ---
 
 ## Planned Capabilities (Roadmap)
