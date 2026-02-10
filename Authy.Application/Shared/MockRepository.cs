@@ -8,28 +8,29 @@ namespace Authy.Application.Shared;
 
 public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRepository, IUserRepository, IUnitOfWork, IRefreshTokenRepository
 {
-    private static readonly List<Organization> Organizations = new()
-    {
-        new Organization 
-        { 
-            Id = Guid.Parse("31052a63-0ade-4b14-bada-1ea2fc1ae40a"), 
+    private static readonly List<Organization> Organizations =
+    [
+        new Organization
+        {
+            Id = Guid.Parse("31052a63-0ade-4b14-bada-1ea2fc1ae40a"),
             Name = "Test Org",
-            Owners = new List<User> { new() { Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e"), Name = "Test User" } }
+            Owners = new List<User>
+                { new() { Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e"), Name = "Test User" } }
         }
-    };
+    ];
 
-    private static readonly List<User> Users = new()
-    {
-        new User 
-        { 
-            Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e"), 
-            Name = "Test User", 
-            OrganizationId = Guid.Parse("31052a63-0ade-4b14-bada-1ea2fc1ae40a") 
+    private static readonly List<User> Users =
+    [
+        new User
+        {
+            Id = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e"),
+            Name = "Test User",
+            OrganizationId = Guid.Parse("31052a63-0ade-4b14-bada-1ea2fc1ae40a")
         }
-    };
+    ];
 
-    private static readonly List<Role> Roles = new();
-    private static readonly List<Scope> Scopes = new();
+    private static readonly List<Role> Roles = [];
+    private static readonly List<Scope> Scopes = [];
 
     Task<User?> IUserRepository.GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
@@ -45,7 +46,35 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
     Task<List<string>> IUserRepository.GetScopesAsync(Guid userId, CancellationToken cancellationToken)
     {
         var user = Users.FirstOrDefault(u => u.Id == userId);
-        return Task.FromResult(user?.Roles.SelectMany(r => r.Scopes).Select(s => s.Name).Distinct().ToList() ?? new List<string>());
+        return Task.FromResult(user?.Roles.SelectMany(r => r.Scopes).Select(s => s.Name).Distinct().ToList() ?? []);
+    }
+
+    Task<List<User>> IUserRepository.GetByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Users.Where(u => u.OrganizationId == organizationId).ToList());
+    }
+
+    Task IUserRepository.AddAsync(User user, CancellationToken cancellationToken)
+    {
+        Users.Add(user);
+        return Task.CompletedTask;
+    }
+
+    Task IUserRepository.UpdateAsync(User user, CancellationToken cancellationToken)
+    {
+        var existing = Users.FirstOrDefault(u => u.Id == user.Id);
+        if (existing != null)
+        {
+            Users.Remove(existing);
+            Users.Add(user);
+        }
+        return Task.CompletedTask;
+    }
+
+    Task IUserRepository.DeleteAsync(User user, CancellationToken cancellationToken)
+    {
+        Users.RemoveAll(u => u.Id == user.Id);
+        return Task.CompletedTask;
     }
 
     Task<Organization?> IOrganizationRepository.GetByIdAsync(Guid id, CancellationToken cancellationToken)
@@ -128,7 +157,7 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
         return Task.CompletedTask;
     }
 
-    private static readonly List<RefreshToken> RefreshTokens = new();
+    private static readonly List<RefreshToken> RefreshTokens = [];
 
     public Task AddAsync(RefreshToken refreshToken, CancellationToken cancellationToken)
     {
@@ -162,4 +191,3 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
         return Task.CompletedTask;
     }
 }
-

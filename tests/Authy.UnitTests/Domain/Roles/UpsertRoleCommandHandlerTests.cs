@@ -31,7 +31,7 @@ public class UpsertRoleCommandHandlerTests : TestBase
     {
         // Arrange
         const string roleName = "role";
-        var command = new UpsertRoleCommand(Guid.NewGuid(), roleName, new List<string>(), Guid.NewGuid());
+        var command = new UpsertRoleCommand(Guid.NewGuid(), roleName, [], Guid.NewGuid());
 
         // Act
         var result = await _handler.HandleAsync(command, CancellationToken);
@@ -48,7 +48,7 @@ public class UpsertRoleCommandHandlerTests : TestBase
         const string roleName = "role";
         const string missingScopeName = "missing-scope";
         
-        var command = new UpsertRoleCommand(Guid.NewGuid(), roleName, new List<string> { missingScopeName }, Guid.NewGuid());
+        var command = new UpsertRoleCommand(Guid.NewGuid(), roleName, [missingScopeName], Guid.NewGuid());
         
         _authorizationService.EnsureRootIpOrOwnerAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
@@ -77,7 +77,7 @@ public class UpsertRoleCommandHandlerTests : TestBase
         await DbContext.Scopes.AddAsync(scope, TestContext.CancellationToken);
         await DbContext.SaveChangesAsync(TestContext.CancellationToken);
 
-        var command = new UpsertRoleCommand(orgId, newRoleName, new List<string> { existingScopeName }, Guid.NewGuid());
+        var command = new UpsertRoleCommand(orgId, newRoleName, [existingScopeName], Guid.NewGuid());
         
         _authorizationService.EnsureRootIpOrOwnerAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());

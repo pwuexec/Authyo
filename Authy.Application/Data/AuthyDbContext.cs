@@ -1,4 +1,3 @@
-using Authy.Application.Entitites;
 using Microsoft.EntityFrameworkCore;
 
 namespace Authy.Application.Data;

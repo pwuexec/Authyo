@@ -6,7 +6,6 @@ using Authy.Application.Shared.Abstractions;
 using NSubstitute;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Microsoft.EntityFrameworkCore;
 
 namespace Authy.UnitTests.Domain.Users;
 
@@ -240,10 +239,10 @@ public class RefreshTokenCommandHandlerTests : TestBase
 
     private string GenerateJwtToken(string jti)
     {
-        var token = new JwtSecurityToken(claims: new[]
-        {
+        var token = new JwtSecurityToken(claims:
+        [
             new Claim(JwtRegisteredClaimNames.Jti, jti)
-        });
+        ]);
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 }

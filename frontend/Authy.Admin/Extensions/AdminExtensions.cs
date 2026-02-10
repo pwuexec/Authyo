@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Builder;
 using Authy.Admin.Components;
 using Authy.Admin.Services;
 using Authy.Application.Extensions;

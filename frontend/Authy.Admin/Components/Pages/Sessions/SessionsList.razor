@@ -109,7 +109,7 @@ else
 
     private Guid? selectedUserId;
     private string userIdInput = string.Empty;
-    private List<RefreshToken> sessions = new();
+    private List<RefreshToken> sessions = [];
     private RefreshToken? sessionToRevoke;
     private bool isLoading = false;
     private bool isRevoking = false;
@@ -178,7 +178,7 @@ else
     {
         selectedUserId = null;
         userIdInput = string.Empty;
-        sessions = new();
+        sessions = [];
     }
 
     private void ShowRevokeConfirm(RefreshToken session)

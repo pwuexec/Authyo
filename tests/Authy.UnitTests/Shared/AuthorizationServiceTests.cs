@@ -4,9 +4,7 @@ using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Domain.Users.Data;
 using Authy.Application.Entitites;
 using Authy.Application.Shared;
-using Authy.Application.Shared.Abstractions;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 

@@ -21,7 +21,7 @@ public class Dispatcher(IServiceProvider serviceProvider) : IDispatcher
         RequestHandlerDelegate<TResult> handlerDelegate = () =>
         {
             var method = handlerType.GetMethod(nameof(ICommandHandler<ICommand<TResult>, TResult>.HandleAsync));
-            return (Task<TResult>)method!.Invoke(handler, new object[] { command, cancellationToken })!;
+            return (Task<TResult>)method!.Invoke(handler, [command, cancellationToken])!;
         };
 
         // Chain behaviors in reverse order
@@ -30,7 +30,7 @@ public class Dispatcher(IServiceProvider serviceProvider) : IDispatcher
             (next, behavior) => () =>
             {
                 var method = behavior.GetType().GetMethod("HandleAsync");
-                return (Task<TResult>)method!.Invoke(behavior, new object[] { command, next, cancellationToken })!;
+                return (Task<TResult>)method!.Invoke(behavior, [command, next, cancellationToken])!;
             });
 
         return await pipeline();
@@ -53,7 +53,7 @@ public class Dispatcher(IServiceProvider serviceProvider) : IDispatcher
         RequestHandlerDelegate<TResult> handlerDelegate = () =>
         {
             var method = handlerType.GetMethod(nameof(IQueryHandler<IQuery<TResult>, TResult>.HandleAsync));
-            return (Task<TResult>)method!.Invoke(handler, new object[] { query, cancellationToken })!;
+            return (Task<TResult>)method!.Invoke(handler, [query, cancellationToken])!;
         };
 
         // Chain behaviors in reverse order
@@ -62,7 +62,7 @@ public class Dispatcher(IServiceProvider serviceProvider) : IDispatcher
             (next, behavior) => () =>
             {
                 var method = behavior.GetType().GetMethod("HandleAsync");
-                return (Task<TResult>)method!.Invoke(behavior, new object[] { query, next, cancellationToken })!;
+                return (Task<TResult>)method!.Invoke(behavior, [query, next, cancellationToken])!;
             });
 
         return await pipeline();
