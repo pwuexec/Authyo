@@ -1,13 +1,18 @@
 @page "/organizations"
 @inject IDispatcher Dispatcher
 @inject IAdminContext AdminContext
-@inject NavigationManager Navigation
 @using Authy.Application.Domain.Organizations
+@using System.ComponentModel.DataAnnotations
 @rendermode InteractiveServer
 
 <PageTitle>Organizations - Authy Admin</PageTitle>
 
-<h1>Organizations</h1>
+<div class="page-header">
+    <div>
+        <h1>Organizations</h1>
+        <p class="page-subtitle">Create and manage organizations in your tenant.</p>
+    </div>
+</div>
 
 @if (!AdminContext.IsRootUser)
 {
@@ -20,9 +25,11 @@ else
 
     <div class="create-form">
         <h3>Create Organization</h3>
-        <EditForm Model="@this" OnValidSubmit="CreateOrganization" FormName="createOrgForm">
-            <div class="form-group">
-                <input type="text" @bind="newOrgName" placeholder="Organization name" class="form-input" />
+        <EditForm EditContext="editContext" OnValidSubmit="CreateOrganization">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
+            <div class="form-group inline">
+                <InputText class="form-input" @bind-Value="orgModel.OrganizationName" placeholder="Organization name" />
                 <button type="submit" class="btn btn-primary" disabled="@isCreating">
                     @if (isCreating)
                     {
@@ -34,6 +41,7 @@ else
                     }
                 </button>
             </div>
+            <ValidationMessage For="@(() => orgModel.OrganizationName)" />
         </EditForm>
     </div>
 
@@ -47,7 +55,7 @@ else
             <td>@org.Name</td>
             <td><code>@org.Id</code></td>
             <td>
-                <a href="/organizations/@org.Id" class="btn btn-sm btn-secondary">View Details</a>
+                <NavLink href="/organizations/@org.Id" class="btn btn-sm btn-secondary">View Details</NavLink>
             </td>
         </RowTemplate>
     </DataTable>
@@ -57,11 +65,17 @@ else
     private List<GetOrganizationsOutput> organizations = new();
     private bool isLoading = true;
     private bool isCreating = false;
-    private string newOrgName = string.Empty;
+    private readonly CreateOrganizationModel orgModel = new();
+    private EditContext? editContext;
 
     private bool showAlert = false;
     private string alertMessage = string.Empty;
     private Alert.AlertType alertType = Alert.AlertType.Info;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(orgModel);
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,23 +106,18 @@ else
 
     private async Task CreateOrganization()
     {
-        if (string.IsNullOrWhiteSpace(newOrgName))
-        {
-            ShowAlert("Organization name is required.", Alert.AlertType.Warning);
-            return;
-        }
-
         isCreating = true;
         StateHasChanged();
 
         try
         {
-            var result = await Dispatcher.DispatchAsync(new CreateOrganizationCommand(newOrgName), CancellationToken.None);
+            var result = await Dispatcher.DispatchAsync(new CreateOrganizationCommand(orgModel.OrganizationName), CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 ShowAlert($"Organization '{result.Value.Name}' created successfully!", Alert.AlertType.Success);
-                newOrgName = string.Empty;
+                orgModel.OrganizationName = string.Empty;
+                editContext?.NotifyFieldChanged(new FieldIdentifier(orgModel, nameof(CreateOrganizationModel.OrganizationName)));
                 await LoadOrganizations();
             }
             else
@@ -132,5 +141,10 @@ else
         alertType = type;
         showAlert = true;
     }
-}
 
+    private sealed class CreateOrganizationModel
+    {
+        [Required(ErrorMessage = "Organization name is required.")]
+        public string OrganizationName { get; set; } = string.Empty;
+    }
+}

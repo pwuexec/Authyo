@@ -1,13 +1,18 @@
 @page "/sessions"
 @page "/users/{UserId:guid}/sessions"
 @inject IDispatcher Dispatcher
-@inject IAdminContext AdminContext
 @inject NavigationManager Navigation
 @using Authy.Application.Domain.Users
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>Sessions - Authy Admin</PageTitle>
 
-<h1>User Sessions</h1>
+<div class="page-header">
+    <div>
+        <h1>User Sessions</h1>
+        <p class="page-subtitle">Review active tokens and revoke access when needed.</p>
+    </div>
+</div>
 
 <Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
 
@@ -15,16 +20,19 @@
 {
     <div class="user-input-section">
         <h3>Enter User ID</h3>
-        <p class="help-text">Enter a user ID to view their active sessions.</p>
-        <form @onsubmit="LoadSessionsForUser">
-            <div class="form-group">
-                <input type="text" @bind="userIdInput" placeholder="User ID (GUID)" class="form-input" />
+        <p class="page-subtitle">Enter a user ID to view their active sessions.</p>
+        <EditForm EditContext="editContext" OnValidSubmit="LoadSessionsForUser">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
+            <div class="form-group inline">
+                <InputText class="form-input" @bind-Value="userLookup.UserId" placeholder="User ID (GUID)" />
                 <button type="submit" class="btn btn-primary">View Sessions</button>
             </div>
-        </form>
+            <ValidationMessage For="@(() => userLookup.UserId)" />
+        </EditForm>
 
         <div class="quick-access">
-            <p>Quick access:</p>
+            <p class="form-help">Quick access:</p>
             <button class="btn btn-secondary btn-sm" @onclick="UseTestUser">
                 Use Test User (f7fa1c38-9736-41b6-91b8-0745d0cec70e)
             </button>
@@ -34,7 +42,7 @@
 else
 {
     <div class="breadcrumb">
-        <a href="/sessions">Sessions</a> / User @UserId
+        <NavLink href="/sessions">Sessions</NavLink> / <span>User @UserId</span>
     </div>
 }
 
@@ -108,7 +116,8 @@ else
     [Parameter] public Guid? UserId { get; set; }
 
     private Guid? selectedUserId;
-    private string userIdInput = string.Empty;
+    private readonly UserLookupModel userLookup = new();
+    private EditContext? editContext;
     private List<RefreshToken> sessions = new();
     private RefreshToken? sessionToRevoke;
     private bool isLoading = false;
@@ -122,6 +131,11 @@ else
     // Mock requesting user ID for authorization
     private readonly Guid mockRequestingUserId = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e");
 
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(userLookup);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         if (UserId.HasValue)
@@ -133,25 +147,16 @@ else
 
     private void UseTestUser()
     {
-        userIdInput = "f7fa1c38-9736-41b6-91b8-0745d0cec70e";
+        userLookup.UserId = "f7fa1c38-9736-41b6-91b8-0745d0cec70e";
+        editContext?.NotifyFieldChanged(new FieldIdentifier(userLookup, nameof(UserLookupModel.UserId)));
     }
 
     private async Task LoadSessionsForUser()
     {
-        if (string.IsNullOrWhiteSpace(userIdInput))
-        {
-            ShowAlert("Please enter a user ID.", Alert.AlertType.Warning);
-            return;
-        }
-
-        if (!Guid.TryParse(userIdInput, out var parsedUserId))
-        {
-            ShowAlert("Invalid user ID format. Please enter a valid GUID.", Alert.AlertType.Error);
-            return;
-        }
+        var parsedUserId = Guid.Parse(userLookup.UserId);
 
         selectedUserId = parsedUserId;
-        await LoadSessions();
+        Navigation.NavigateTo($"/users/{selectedUserId}/sessions", replace: true);
     }
 
     private async Task LoadSessions()
@@ -177,8 +182,10 @@ else
     private void ClearUser()
     {
         selectedUserId = null;
-        userIdInput = string.Empty;
+        userLookup.UserId = string.Empty;
+        editContext?.NotifyFieldChanged(new FieldIdentifier(userLookup, nameof(UserLookupModel.UserId)));
         sessions = new();
+        Navigation.NavigateTo("/sessions", replace: true);
     }
 
     private void ShowRevokeConfirm(RefreshToken session)
@@ -228,154 +235,18 @@ else
         alertType = type;
         showAlert = true;
     }
+
+    private sealed class UserLookupModel : IValidatableObject
+    {
+        [Required(ErrorMessage = "User ID is required.")]
+        public string UserId { get; set; } = string.Empty;
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (!Guid.TryParse(UserId, out _))
+            {
+                yield return new ValidationResult("Enter a valid GUID.", new[] { nameof(UserId) });
+            }
+        }
+    }
 }
-
-<style>
-    .breadcrumb {
-        margin-bottom: 1rem;
-        color: #666;
-    }
-
-    .breadcrumb a {
-        color: #007bff;
-        text-decoration: none;
-    }
-
-    .user-input-section {
-        background: white;
-        padding: 2rem;
-        border-radius: 8px;
-        max-width: 600px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .user-input-section h3 {
-        margin: 0 0 0.5rem 0;
-    }
-
-    .help-text {
-        color: #666;
-        margin-bottom: 1rem;
-    }
-
-    .form-group {
-        display: flex;
-        gap: 1rem;
-        align-items: center;
-    }
-
-    .form-input {
-        flex: 1;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        font-family: monospace;
-    }
-
-    .quick-access {
-        margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-
-    .quick-access p {
-        margin: 0 0 0.5rem 0;
-        color: #666;
-        font-size: 0.85rem;
-    }
-
-    .user-info {
-        background: #f8f9fa;
-        padding: 1rem;
-        border-radius: 4px;
-        margin-bottom: 1rem;
-        display: flex;
-        align-items: center;
-        gap: 1rem;
-    }
-
-    .user-info code {
-        background: #e9ecef;
-        padding: 0.2rem 0.4rem;
-        border-radius: 3px;
-        font-size: 0.85rem;
-    }
-
-    .btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        text-decoration: none;
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .btn-primary {
-        background: #007bff;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .btn-danger {
-        background: #dc3545;
-        color: white;
-    }
-
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    .status-badge {
-        display: inline-block;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-    }
-
-    .status-badge.active {
-        background: #d4edda;
-        color: #155724;
-    }
-
-    .status-badge.expired {
-        background: #fff3cd;
-        color: #856404;
-    }
-
-    .status-badge.revoked {
-        background: #f8d7da;
-        color: #721c24;
-    }
-
-    .user-agent-cell {
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    .revoked-info {
-        color: #999;
-        font-size: 0.8rem;
-    }
-
-    code {
-        background: #f4f4f4;
-        padding: 0.1rem 0.3rem;
-        border-radius: 3px;
-        font-size: 0.8rem;
-    }
-</style>
-

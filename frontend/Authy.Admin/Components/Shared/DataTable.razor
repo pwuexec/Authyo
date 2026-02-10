@@ -12,24 +12,26 @@ else if (Items == null || !Items.Any())
 }
 else
 {
-    <table class="data-table">
-        <thead>
-            <tr>
-                @HeaderTemplate
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Items)
-            {
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    @if (RowTemplate != null)
-                    {
-                        @RowTemplate(item)
-                    }
+                    @HeaderTemplate
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Items)
+                {
+                    <tr>
+                        @if (RowTemplate != null)
+                        {
+                            @RowTemplate(item)
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 
 @code {
@@ -39,4 +41,3 @@ else
     [Parameter] public RenderFragment? HeaderTemplate { get; set; }
     [Parameter] public RenderFragment<TItem>? RowTemplate { get; set; }
 }
-

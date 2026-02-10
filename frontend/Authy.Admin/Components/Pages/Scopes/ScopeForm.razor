@@ -1,21 +1,26 @@
 @page "/organizations/{OrgId:guid}/scopes/new"
 @page "/organizations/{OrgId:guid}/scopes/{ScopeName}/edit"
 @inject IDispatcher Dispatcher
-@inject IAdminContext AdminContext
 @inject NavigationManager Navigation
 @using Authy.Application.Domain.Organizations
 @using Authy.Application.Domain.Scopes
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>@(IsEditMode ? "Edit Scope" : "Create Scope") - Authy Admin</PageTitle>
 
 <div class="breadcrumb">
-    <a href="/organizations">Organizations</a> /
-    <a href="/organizations/@OrgId">@orgName</a> /
-    <a href="/organizations/@OrgId/scopes">Scopes</a> /
-    @(IsEditMode ? $"Edit {ScopeName}" : "New")
+    <NavLink href="/organizations">Organizations</NavLink> /
+    <NavLink href="/organizations/@OrgId">@orgName</NavLink> /
+    <NavLink href="/organizations/@OrgId/scopes">Scopes</NavLink> /
+    <span>@(IsEditMode ? $"Edit {ScopeName}" : "New")</span>
 </div>
 
-<h1>@(IsEditMode ? $"Edit Scope: {ScopeName}" : "Create New Scope")</h1>
+<div class="page-header">
+    <div>
+        <h1>@(IsEditMode ? $"Edit Scope: {ScopeName}" : "Create New Scope")</h1>
+        <p class="page-subtitle">Scopes describe the permissions a role can grant.</p>
+    </div>
+</div>
 
 <Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
 
@@ -25,21 +30,24 @@
 }
 else
 {
-    <div class="form-container">
-        <form @onsubmit="SaveScope">
+    <div class="form-card">
+        <EditForm EditContext="editContext" OnValidSubmit="SaveScope">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
             <div class="form-group">
-                <label for="scopeName">Scope Name</label>
-                <input type="text" id="scopeName" @bind="scopeName" class="form-input"
-                       placeholder="Enter scope name (e.g., read:users, write:posts)" />
+                <label class="form-label" for="scopeName">Scope Name</label>
+                <InputText id="scopeName" @bind-Value="formModel.ScopeName" class="form-input"
+                           placeholder="Enter scope name (e.g., read:users, write:posts)" />
+                <ValidationMessage For="@(() => formModel.ScopeName)" />
                 <small class="form-help">
-                    Scope names typically follow a pattern like "action:resource" (e.g., read:users, write:posts, admin:all).
+                    Scope names typically follow a pattern like \"action:resource\" (e.g., read:users, write:posts, admin:all).
                 </small>
             </div>
 
             @if (IsEditMode && existingScope != null && existingScope.Roles.Any())
             {
                 <div class="form-group">
-                    <label>Used by Roles</label>
+                    <label class="form-label">Used by Roles</label>
                     <div class="role-list">
                         @foreach (var role in existingScope.Roles)
                         {
@@ -65,7 +73,7 @@ else
                     }
                 </button>
             </div>
-        </form>
+        </EditForm>
     </div>
 }
 
@@ -76,7 +84,8 @@ else
     private bool IsEditMode => !string.IsNullOrEmpty(ScopeName);
 
     private string orgName = string.Empty;
-    private string scopeName = string.Empty;
+    private readonly ScopeFormModel formModel = new();
+    private EditContext? editContext;
     private string originalScopeName = string.Empty;
     private GetScopesOutput? existingScope;
     private bool isLoading = true;
@@ -89,6 +98,11 @@ else
     // Mock user ID for authorization
     private readonly Guid mockUserId = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e");
 
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(formModel);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         await LoadData();
@@ -97,6 +111,12 @@ else
     private async Task LoadData()
     {
         isLoading = true;
+        if (!IsEditMode)
+        {
+            formModel.ScopeName = string.Empty;
+            originalScopeName = string.Empty;
+            existingScope = null;
+        }
 
         // Load organization name
         var orgsResult = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
@@ -124,7 +144,7 @@ else
 
                 if (existingScope != null)
                 {
-                    scopeName = existingScope.Name;
+                    formModel.ScopeName = existingScope.Name;
                     originalScopeName = existingScope.Name;
                 }
                 else
@@ -139,18 +159,12 @@ else
 
     private async Task SaveScope()
     {
-        if (string.IsNullOrWhiteSpace(scopeName))
-        {
-            ShowAlert("Scope name is required.", Alert.AlertType.Warning);
-            return;
-        }
-
         isSaving = true;
 
         // For create: use scopeName as both the lookup key and the UpsertFields.Name
         // For edit: use originalScopeName as the lookup key, scopeName as the new name
-        var lookupName = IsEditMode ? originalScopeName : scopeName;
-        var upsertFields = new UpsertScopeFields(scopeName);
+        var lookupName = IsEditMode ? originalScopeName : formModel.ScopeName;
+        var upsertFields = new UpsertScopeFields(formModel.ScopeName);
 
         var result = await Dispatcher.DispatchAsync(
             new UpsertScopeCommand(OrgId, lookupName, mockUserId, upsertFields),
@@ -178,103 +192,10 @@ else
         alertType = type;
         showAlert = true;
     }
+
+    private sealed class ScopeFormModel
+    {
+        [Required(ErrorMessage = "Scope name is required.")]
+        public string ScopeName { get; set; } = string.Empty;
+    }
 }
-
-<style>
-    .breadcrumb {
-        margin-bottom: 1rem;
-        color: #666;
-    }
-
-    .breadcrumb a {
-        color: #007bff;
-        text-decoration: none;
-    }
-
-    .breadcrumb a:hover {
-        text-decoration: underline;
-    }
-
-    .form-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 8px;
-        max-width: 600px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #333;
-    }
-
-    .form-input {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-    }
-
-    .form-help {
-        display: block;
-        color: #666;
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
-    }
-
-    .role-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        padding: 0.5rem;
-        background: #f8f9fa;
-        border-radius: 4px;
-    }
-
-    .role-badge {
-        background: #d4edda;
-        color: #155724;
-        padding: 0.25rem 0.75rem;
-        border-radius: 12px;
-        font-size: 0.85rem;
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-
-    .btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .btn-primary {
-        background: #007bff;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-</style>
-
