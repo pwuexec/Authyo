@@ -1,14 +1,24 @@
+using Authy.Application.Options;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Authy.Application.Data;
 
-internal class DatabaseInitializer(IServiceScopeFactory scopeFactory) : IHostedLifecycleService
+internal class DatabaseInitializer(IServiceScopeFactory scopeFactory, IOptions<PersistenceOptions> persistenceOptions)
+    : IHostedLifecycleService
 {
+    private readonly PersistenceOptions _persistenceOptions = persistenceOptions.Value;
+
     public async Task StartingAsync(CancellationToken cancellationToken)
     {
         await using var scope = scopeFactory.CreateAsyncScope();
         var context = scope.ServiceProvider.GetRequiredService<AuthyDbContext>();
+
+        if (_persistenceOptions.Recreate)
+        {
+            await context.Database.EnsureDeletedAsync(cancellationToken);
+        }
 
         if (context.Database.GetMigrations().Any())
         {

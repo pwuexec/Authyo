@@ -4,6 +4,7 @@ using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Domain.Roles.Data;
 using Authy.Application.Domain.Scopes.Data;
 using Authy.Application.Domain.Users.Data;
+using Authy.Application.Options;
 using Authy.Application.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,14 +14,12 @@ public static class DatabaseExtensions
 {
     public static IServiceCollection AddPersistence(this IServiceCollection services, IConfiguration configuration)
     {
-        var provider = configuration["Persistence:Provider"];
+        var persistenceOptions = services.AddAuthyOptions<PersistenceOptions>(configuration);
 
-        if (provider == "Sqlite")
+        if (persistenceOptions.Provider == PersistenceProvider.Sqlite)
         {
-            var connectionString = configuration["Persistence:ConnectionString"] ?? "Data Source=authy.db";
-
             services.AddDbContext<AuthyDbContext>(options =>
-                options.UseSqlite(connectionString));
+                options.UseSqlite(persistenceOptions.ConnectionString));
 
             services
                 .AddScoped<IOrganizationRepository, OrganizationRepository>()

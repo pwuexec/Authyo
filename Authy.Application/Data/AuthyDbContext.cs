@@ -2,12 +2,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Authy.Application.Data;
 
-public class AuthyDbContext : DbContext
+public class AuthyDbContext(DbContextOptions<AuthyDbContext> options) : DbContext(options)
 {
-    public AuthyDbContext(DbContextOptions<AuthyDbContext> options) : base(options)
-    {
-    }
-
     public DbSet<User> Users { get; set; }
     public DbSet<Role> Roles { get; set; }
     public DbSet<Scope> Scopes { get; set; }
