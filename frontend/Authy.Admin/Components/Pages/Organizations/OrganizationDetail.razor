@@ -91,8 +91,8 @@ else
     [Parameter] public Guid OrgId { get; set; }
 
     private GetOrganizationsOutput? organization;
-    private List<GetRolesOutput> roles = new();
-    private List<GetScopesOutput> scopes = new();
+    private List<GetRolesOutput> roles = [];
+    private List<GetScopesOutput> scopes = [];
     private bool isLoading = true;
 
     protected override async Task OnParametersSetAsync()

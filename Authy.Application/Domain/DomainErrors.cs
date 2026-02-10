@@ -19,6 +19,14 @@ public static class DomainErrors
         public static readonly Error Unauthorized = new(
             "User.Unauthorized",
             "User is not authorized");
+
+        public static readonly Error NameEmpty = new(
+            "User.NameEmpty",
+            "User name cannot be empty");
+
+        public static readonly Error CannotRemoveSelf = new(
+            "User.CannotRemoveSelf",
+            "User cannot remove themselves");
     }
 
     public static class Role
@@ -44,6 +52,10 @@ public static class DomainErrors
         public static readonly Error NameEmpty = new(
             "Organization.NameEmpty",
             "Organization name cannot be empty");
+
+        public static readonly Error NotFound = new(
+            "Organization.NotFound",
+            "Organization not found");
     }
 
     public static class RefreshToken
@@ -76,4 +88,3 @@ public static class DomainErrors
             "Invalid access token format");
     }
 }
-

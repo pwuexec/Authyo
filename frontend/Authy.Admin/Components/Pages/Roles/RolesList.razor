@@ -78,7 +78,7 @@ else
     private OrganizationSelector? orgSelector;
     private Guid? selectedOrgId;
     private string selectedOrgName = string.Empty;
-    private List<GetRolesOutput> roles = new();
+    private List<GetRolesOutput> roles = [];
     private bool isLoading = false;
 
     private bool showAlert = false;
@@ -124,7 +124,7 @@ else
         {
             selectedOrgId = null;
             selectedOrgName = string.Empty;
-            roles = new();
+            roles = [];
             return;
         }
 

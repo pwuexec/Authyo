@@ -2,7 +2,6 @@ using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Domain.Roles.Data;
 using Authy.Application.Domain.Scopes.Data;
 using Authy.Application.Domain.Users.Data;
-using Authy.Application.Entitites;
 using Authy.Application.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
@@ -80,13 +79,16 @@ public class OrganizationRepository(AuthyDbContext dbContext) : IOrganizationRep
     public Task<Organization?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return dbContext.Organizations
+            .AsNoTracking()
             .Include(o => o.Owners)
             .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
     }
 
     public Task<List<Organization>> GetAllAsync(CancellationToken cancellationToken)
     {
-        return dbContext.Organizations.ToListAsync(cancellationToken);
+        return dbContext.Organizations
+            .AsNoTracking()
+            .ToListAsync(cancellationToken);
     }
 
     public async Task AddAsync(Organization organization, CancellationToken cancellationToken)
@@ -107,6 +109,7 @@ public class UserRepository(AuthyDbContext dbContext) : IUserRepository
     public Task<Guid?> GetOrganizationUserIdAsync(Guid userId, CancellationToken cancellationToken)
     {
         return dbContext.Users
+            .AsNoTracking()
             .Where(u => u.Id == userId)
             .Select(u => (Guid?)u.OrganizationId)
             .SingleOrDefaultAsync(cancellationToken);
@@ -115,12 +118,38 @@ public class UserRepository(AuthyDbContext dbContext) : IUserRepository
     public Task<List<string>> GetScopesAsync(Guid userId, CancellationToken cancellationToken)
     {
         return dbContext.Users
+            .AsNoTracking()
             .Where(u => u.Id == userId)
             .SelectMany(u => u.Roles)
             .SelectMany(r => r.Scopes)
             .Select(s => s.Name)
             .Distinct()
             .ToListAsync(cancellationToken);
+    }
+
+    public Task<List<User>> GetByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken)
+    {
+        return dbContext.Users
+            .AsNoTracking()
+            .Where(u => u.OrganizationId == organizationId)
+            .ToListAsync(cancellationToken);
+    }
+
+    public Task AddAsync(User user, CancellationToken cancellationToken)
+    {
+        return dbContext.Users.AddAsync(user, cancellationToken).AsTask();
+    }
+
+    public Task UpdateAsync(User user, CancellationToken cancellationToken)
+    {
+        dbContext.Users.Update(user);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(User user, CancellationToken cancellationToken)
+    {
+        dbContext.Users.Remove(user);
+        return Task.CompletedTask;
     }
 }
 
@@ -134,12 +163,14 @@ public class RefreshTokenRepository(AuthyDbContext dbContext) : IRefreshTokenRep
 
     public Task<RefreshToken?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
-        return dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Id == id, cancellationToken);
+        return dbContext.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Id == id, cancellationToken);
     }
 
     public Task<RefreshToken?> GetByTokenAsync(string token, CancellationToken cancellationToken)
     {
-        return dbContext.RefreshTokens.FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
+        return dbContext.RefreshTokens
+            .FirstOrDefaultAsync(rt => rt.Token == token, cancellationToken);
     }
 
     public Task<List<RefreshToken>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken)
@@ -163,4 +194,3 @@ public class UnitOfWork(AuthyDbContext dbContext) : IUnitOfWork
         return dbContext.SaveChangesAsync(cancellationToken);
     }
 }
-

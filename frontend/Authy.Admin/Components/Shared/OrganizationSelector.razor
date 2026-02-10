@@ -27,7 +27,7 @@
     [Parameter] public EventCallback<Guid?> SelectedOrganizationIdChanged { get; set; }
     [Parameter] public EventCallback<GetOrganizationsOutput?> OnSelectionChanged { get; set; }
 
-    private List<GetOrganizationsOutput> Organizations { get; set; } = new();
+    private List<GetOrganizationsOutput> Organizations { get; set; } = [];
     private bool IsLoading { get; set; } = true;
 
     protected override async Task OnInitializedAsync()

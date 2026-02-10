@@ -9,6 +9,8 @@ public static class UserEndpoints
 {
     public record LoginRequest(Guid UserId);
     public record RefreshTokenRequest(string AccessToken, string RefreshToken);
+    public record CreateOrganizationUserRequest(string Name);
+    public record UpdateOrganizationUserRequest(string Name);
 
     extension(IEndpointRouteBuilder app)
     {
@@ -76,6 +78,72 @@ public static class UserEndpoints
                 .WithSummary("Gets active sessions for a specific user")
                 .Produces<List<RefreshToken>>(StatusCodes.Status200OK);
 
+            var organizationGroup = app.MapGroup("/organization")
+                .WithTags("Organization")
+                .WithDefaultApiResponses();
+
+            organizationGroup.MapGet("/{id:guid}/users", async (IDispatcher dispatcher,
+                    Guid id, ClaimsPrincipal user, CancellationToken cancellationToken) =>
+                {
+                    var requestingUserId = user.GetUserId() ?? Guid.Empty;
+                    var query = new GetOrganizationUsersQuery(id, requestingUserId);
+                    var result = await dispatcher.DispatchAsync(query, cancellationToken);
+
+                    return result.IsSuccess
+                        ? Results.Ok(result.Value)
+                        : result.ToProblem();
+                })
+                .WithName("GetOrganizationUsers")
+                .WithSummary("Gets users for a specific organization")
+                .Produces<List<OrganizationUserOutput>>(StatusCodes.Status200OK);
+
+            organizationGroup.MapPost("/{id:guid}/users", async (IDispatcher dispatcher,
+                    Guid id, ClaimsPrincipal user, [FromBody] CreateOrganizationUserRequest request,
+                    CancellationToken cancellationToken) =>
+                {
+                    var requestingUserId = user.GetUserId() ?? Guid.Empty;
+                    var command = new CreateOrganizationUserCommand(id, request.Name, requestingUserId);
+                    var result = await dispatcher.DispatchAsync(command, cancellationToken);
+
+                    return result.IsSuccess
+                        ? Results.Ok(result.Value)
+                        : result.ToProblem();
+                })
+                .WithName("CreateOrganizationUser")
+                .WithSummary("Creates a user within an organization")
+                .Produces<OrganizationUserOutput>(StatusCodes.Status200OK);
+
+            organizationGroup.MapPut("/{id:guid}/users/{userId:guid}", async (IDispatcher dispatcher,
+                    Guid id, Guid userId, ClaimsPrincipal user, [FromBody] UpdateOrganizationUserRequest request,
+                    CancellationToken cancellationToken) =>
+                {
+                    var requestingUserId = user.GetUserId() ?? Guid.Empty;
+                    var command = new UpdateOrganizationUserCommand(id, userId, request.Name, requestingUserId);
+                    var result = await dispatcher.DispatchAsync(command, cancellationToken);
+
+                    return result.IsSuccess
+                        ? Results.Ok(result.Value)
+                        : result.ToProblem();
+                })
+                .WithName("UpdateOrganizationUser")
+                .WithSummary("Updates a user within an organization")
+                .Produces<OrganizationUserOutput>(StatusCodes.Status200OK);
+
+            organizationGroup.MapDelete("/{id:guid}/users/{userId:guid}", async (IDispatcher dispatcher,
+                    Guid id, Guid userId, ClaimsPrincipal user, CancellationToken cancellationToken) =>
+                {
+                    var requestingUserId = user.GetUserId() ?? Guid.Empty;
+                    var command = new DeleteOrganizationUserCommand(id, userId, requestingUserId);
+                    var result = await dispatcher.DispatchAsync(command, cancellationToken);
+
+                    return result.IsSuccess
+                        ? Results.NoContent()
+                        : result.ToProblem();
+                })
+                .WithName("DeleteOrganizationUser")
+                .WithSummary("Deletes a user within an organization")
+                .Produces(StatusCodes.Status204NoContent);
+
             return app;
         }
 
@@ -104,4 +172,3 @@ public static class UserEndpoints
         }
     }
 }
-
