@@ -48,6 +48,34 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
         return Task.FromResult(user?.Roles.SelectMany(r => r.Scopes).Select(s => s.Name).Distinct().ToList() ?? new List<string>());
     }
 
+    Task<List<User>> IUserRepository.GetByOrganizationIdAsync(Guid organizationId, CancellationToken cancellationToken)
+    {
+        return Task.FromResult(Users.Where(u => u.OrganizationId == organizationId).ToList());
+    }
+
+    Task IUserRepository.AddAsync(User user, CancellationToken cancellationToken)
+    {
+        Users.Add(user);
+        return Task.CompletedTask;
+    }
+
+    Task IUserRepository.UpdateAsync(User user, CancellationToken cancellationToken)
+    {
+        var existing = Users.FirstOrDefault(u => u.Id == user.Id);
+        if (existing != null)
+        {
+            Users.Remove(existing);
+            Users.Add(user);
+        }
+        return Task.CompletedTask;
+    }
+
+    Task IUserRepository.DeleteAsync(User user, CancellationToken cancellationToken)
+    {
+        Users.RemoveAll(u => u.Id == user.Id);
+        return Task.CompletedTask;
+    }
+
     Task<Organization?> IOrganizationRepository.GetByIdAsync(Guid id, CancellationToken cancellationToken)
     {
         return Task.FromResult(Organizations.FirstOrDefault(o => o.Id == id));
@@ -162,4 +190,3 @@ public class MockRepository : IOrganizationRepository, IRoleRepository, IScopeRe
         return Task.CompletedTask;
     }
 }
-
