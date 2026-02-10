@@ -141,19 +141,21 @@ public class UserRepository(AuthyDbContext dbContext) : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
-    public async Task AddAsync(User user, CancellationToken cancellationToken)
+    public Task AddAsync(User user, CancellationToken cancellationToken)
     {
-        await dbContext.Users.AddAsync(user, cancellationToken);
+        return dbContext.Users.AddAsync(user, cancellationToken).AsTask();
     }
 
-    public async Task UpdateAsync(User user, CancellationToken cancellationToken)
+    public Task UpdateAsync(User user, CancellationToken cancellationToken)
     {
         dbContext.Users.Update(user);
+        return Task.CompletedTask;
     }
 
-    public async Task DeleteAsync(User user, CancellationToken cancellationToken)
+    public Task DeleteAsync(User user, CancellationToken cancellationToken)
     {
         dbContext.Users.Remove(user);
+        return Task.CompletedTask;
     }
 }
 
