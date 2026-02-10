@@ -49,7 +49,7 @@ public class GetOrganizationUsersQueryHandlerTests : TestBase
 
         // Assert
         Assert.IsTrue(result.IsSuccess);
-        Assert.AreEqual(2, result.Value.Count);
+        Assert.HasCount(2, result.Value);
         Assert.IsTrue(result.Value.All(u => u.OrganizationId == orgId));
     }
 }

@@ -1,5 +1,4 @@
 using Authy.Application.Domain.Users.Data;
-using Authy.Application.Shared;
 using Authy.Application.Shared.Abstractions;
 
 namespace Authy.Application.Domain.Users;

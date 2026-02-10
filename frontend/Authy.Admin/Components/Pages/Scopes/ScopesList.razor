@@ -75,7 +75,7 @@ else
     private OrganizationSelector? orgSelector;
     private Guid? selectedOrgId;
     private string selectedOrgName = string.Empty;
-    private List<GetScopesOutput> scopes = new();
+    private List<GetScopesOutput> scopes = [];
     private bool isLoading = false;
 
     private bool showAlert = false;
@@ -121,7 +121,7 @@ else
         {
             selectedOrgId = null;
             selectedOrgName = string.Empty;
-            scopes = new();
+            scopes = [];
             return;
         }
 

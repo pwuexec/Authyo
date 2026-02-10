@@ -1,6 +1,5 @@
 using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Extensions;
-using Authy.Application.Shared;
 using Authy.Application.Shared.Abstractions;
 using Microsoft.Extensions.Options;
 

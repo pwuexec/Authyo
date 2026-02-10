@@ -20,7 +20,7 @@ public class Result
         }
 
         IsSuccess = isSuccess;
-        Errors = new[] { error };
+        Errors = [error];
     }
 
     protected Result(bool isSuccess, Error[] errors)

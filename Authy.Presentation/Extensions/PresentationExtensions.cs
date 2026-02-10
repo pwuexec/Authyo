@@ -1,7 +1,3 @@
-using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Routing;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Scalar.AspNetCore;
@@ -59,7 +55,7 @@ public static class PresentationExtensions
         return app;
     }
 
-    public static IEndpointRouteBuilder MapPresentationEndpoints(this IEndpointRouteBuilder app)
+    private static IEndpointRouteBuilder MapPresentationEndpoints(this IEndpointRouteBuilder app)
     {
         app
             .MapAuthenticationEndpoints()

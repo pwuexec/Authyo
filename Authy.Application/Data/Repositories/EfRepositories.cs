@@ -2,7 +2,6 @@ using Authy.Application.Domain.Organizations.Data;
 using Authy.Application.Domain.Roles.Data;
 using Authy.Application.Domain.Scopes.Data;
 using Authy.Application.Domain.Users.Data;
-using Authy.Application.Entitites;
 using Authy.Application.Shared.Abstractions;
 using Microsoft.EntityFrameworkCore;
 
