@@ -1,22 +1,27 @@
 @page "/organizations/{OrgId:guid}/roles/new"
 @page "/organizations/{OrgId:guid}/roles/{RoleName}/edit"
 @inject IDispatcher Dispatcher
-@inject IAdminContext AdminContext
 @inject NavigationManager Navigation
 @using Authy.Application.Domain.Organizations
 @using Authy.Application.Domain.Roles
 @using Authy.Application.Domain.Scopes
+@using System.ComponentModel.DataAnnotations
 
 <PageTitle>@(IsEditMode ? "Edit Role" : "Create Role") - Authy Admin</PageTitle>
 
 <div class="breadcrumb">
-    <a href="/organizations">Organizations</a> /
-    <a href="/organizations/@OrgId">@orgName</a> /
-    <a href="/organizations/@OrgId/roles">Roles</a> /
-    @(IsEditMode ? $"Edit {RoleName}" : "New")
+    <NavLink href="/organizations">Organizations</NavLink> /
+    <NavLink href="/organizations/@OrgId">@orgName</NavLink> /
+    <NavLink href="/organizations/@OrgId/roles">Roles</NavLink> /
+    <span>@(IsEditMode ? $"Edit {RoleName}" : "New")</span>
 </div>
 
-<h1>@(IsEditMode ? $"Edit Role: {RoleName}" : "Create New Role")</h1>
+<div class="page-header">
+    <div>
+        <h1>@(IsEditMode ? $"Edit Role: {RoleName}" : "Create New Role")</h1>
+        <p class="page-subtitle">Assign the scopes that define what this role can access.</p>
+    </div>
+</div>
 
 <Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
 
@@ -26,12 +31,15 @@
 }
 else
 {
-    <div class="form-container">
-        <form @onsubmit="SaveRole">
+    <div class="form-card">
+        <EditForm EditContext="editContext" OnValidSubmit="SaveRole">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="validation-summary" />
             <div class="form-group">
-                <label for="roleName">Role Name</label>
-                <input type="text" id="roleName" @bind="roleName" class="form-input"
-                       placeholder="Enter role name" disabled="@IsEditMode" />
+                <label class="form-label" for="roleName">Role Name</label>
+                <InputText id="roleName" class="form-input" @bind-Value="formModel.RoleName"
+                           placeholder="Enter role name" disabled="@IsEditMode" />
+                <ValidationMessage For="@(() => formModel.RoleName)" />
                 @if (IsEditMode)
                 {
                     <small class="form-help">Role name cannot be changed after creation.</small>
@@ -39,13 +47,13 @@ else
             </div>
 
             <div class="form-group">
-                <label>Scopes</label>
+                <label class="form-label">Scopes</label>
                 <p class="form-help">Select at least one scope for this role.</p>
 
                 @if (!availableScopes.Any())
                 {
-                    <p class="no-scopes-message">
-                        No scopes available. <a href="/organizations/@OrgId/scopes/new">Create a scope</a> first.
+                    <p class="form-help">
+                        No scopes available. <NavLink href="/organizations/@OrgId/scopes/new">Create a scope</NavLink> first.
                     </p>
                 }
                 else
@@ -61,6 +69,7 @@ else
                         }
                     </div>
                 }
+                <ValidationMessage For="@(() => formModel.SelectedScopes)" />
             </div>
 
             <div class="form-actions">
@@ -76,7 +85,7 @@ else
                     }
                 </button>
             </div>
-        </form>
+        </EditForm>
     </div>
 }
 
@@ -87,9 +96,10 @@ else
     private bool IsEditMode => !string.IsNullOrEmpty(RoleName);
 
     private string orgName = string.Empty;
-    private string roleName = string.Empty;
-    private List<GetScopesOutput> availableScopes = [];
-    private HashSet<string> selectedScopeNames = [];
+    private readonly RoleFormModel formModel = new();
+    private EditContext? editContext;
+    private List<GetScopesOutput> availableScopes = new();
+    private HashSet<string> selectedScopeNames = new();
     private bool isLoading = true;
     private bool isSaving = false;
 
@@ -100,6 +110,11 @@ else
     // Mock user ID for authorization
     private readonly Guid mockUserId = Guid.Parse("f7fa1c38-9736-41b6-91b8-0745d0cec70e");
 
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(formModel);
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         await LoadData();
@@ -108,6 +123,12 @@ else
     private async Task LoadData()
     {
         isLoading = true;
+        if (!IsEditMode)
+        {
+            formModel.RoleName = string.Empty;
+            selectedScopeNames.Clear();
+            formModel.SelectedScopes = new List<string>();
+        }
 
         // Load organization name
         var orgsResult = await Dispatcher.DispatchAsync(new GetOrganizationsQuery(), CancellationToken.None);
@@ -145,8 +166,9 @@ else
 
                 if (existingRole != null)
                 {
-                    roleName = existingRole.Name;
+                    formModel.RoleName = existingRole.Name;
                     selectedScopeNames = existingRole.Scopes.Select(s => s.Name).ToHashSet();
+                    formModel.SelectedScopes = selectedScopeNames.ToList();
                 }
                 else
                 {
@@ -168,25 +190,16 @@ else
         {
             selectedScopeNames.Remove(scopeName);
         }
+
+        formModel.SelectedScopes = selectedScopeNames.ToList();
+        editContext?.NotifyFieldChanged(new FieldIdentifier(formModel, nameof(RoleFormModel.SelectedScopes)));
     }
 
     private async Task SaveRole()
     {
-        if (string.IsNullOrWhiteSpace(roleName))
-        {
-            ShowAlert("Role name is required.", Alert.AlertType.Warning);
-            return;
-        }
-
-        if (!selectedScopeNames.Any())
-        {
-            ShowAlert("At least one scope is required.", Alert.AlertType.Warning);
-            return;
-        }
-
         isSaving = true;
         var result = await Dispatcher.DispatchAsync(
-            new UpsertRoleCommand(OrgId, roleName, selectedScopeNames.ToList(), mockUserId),
+            new UpsertRoleCommand(OrgId, formModel.RoleName, formModel.SelectedScopes, mockUserId),
             CancellationToken.None);
 
         if (result.IsSuccess)
@@ -211,127 +224,20 @@ else
         alertType = type;
         showAlert = true;
     }
+
+    private sealed class RoleFormModel : IValidatableObject
+    {
+        [Required(ErrorMessage = "Role name is required.")]
+        public string RoleName { get; set; } = string.Empty;
+
+        public List<string> SelectedScopes { get; set; } = new();
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (SelectedScopes.Count == 0)
+            {
+                yield return new ValidationResult("Select at least one scope.", new[] { nameof(SelectedScopes) });
+            }
+        }
+    }
 }
-
-<style>
-    .breadcrumb {
-        margin-bottom: 1rem;
-        color: #666;
-    }
-
-    .breadcrumb a {
-        color: #007bff;
-        text-decoration: none;
-    }
-
-    .breadcrumb a:hover {
-        text-decoration: underline;
-    }
-
-    .form-container {
-        background: white;
-        padding: 2rem;
-        border-radius: 8px;
-        max-width: 600px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-
-    .form-group label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-        color: #333;
-    }
-
-    .form-input {
-        width: 100%;
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 1rem;
-    }
-
-    .form-input:disabled {
-        background: #e9ecef;
-        cursor: not-allowed;
-    }
-
-    .form-help {
-        display: block;
-        color: #666;
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
-    }
-
-    .scope-checkboxes {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-        max-height: 300px;
-        overflow-y: auto;
-        padding: 1rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-    }
-
-    .checkbox-label {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        cursor: pointer;
-        font-weight: normal;
-    }
-
-    .checkbox-label input {
-        width: 18px;
-        height: 18px;
-    }
-
-    .no-scopes-message {
-        color: #666;
-        font-style: italic;
-        padding: 1rem;
-        background: #f8f9fa;
-        border-radius: 4px;
-    }
-
-    .no-scopes-message a {
-        color: #007bff;
-    }
-
-    .form-actions {
-        display: flex;
-        gap: 1rem;
-        justify-content: flex-end;
-        padding-top: 1rem;
-        border-top: 1px solid #eee;
-    }
-
-    .btn {
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-    }
-
-    .btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .btn-primary {
-        background: #007bff;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-</style>
-

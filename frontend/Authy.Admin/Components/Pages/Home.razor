@@ -5,10 +5,17 @@
 
 <PageTitle>Dashboard - Authy Admin</PageTitle>
 
-<h1>Dashboard</h1>
+<div class="page-header">
+    <div class="page-header-row">
+        <div>
+            <h1>Dashboard</h1>
+            <p class="page-subtitle">Welcome back. Manage organizations, roles, scopes, and sessions in one place.</p>
+        </div>
+    </div>
+</div>
 
 <div class="welcome-section">
-    <p>Welcome to the Authy Admin Dashboard.</p>
+    <p>Use the quick actions below to keep identity workflows moving.</p>
     @if (AdminContext.IsRootUser)
     {
         <p class="root-notice">You are accessing as a <strong>root user</strong> with full administrative privileges.</p>
@@ -27,26 +34,26 @@ else
             <div class="stat-card">
                 <h3>Organizations</h3>
                 <div class="stat-value">@organizationCount</div>
-                <a href="/organizations" class="stat-link">Manage Organizations</a>
+                <NavLink href="/organizations" class="stat-link">Manage Organizations</NavLink>
             </div>
         }
 
         <div class="stat-card">
             <h3>Roles</h3>
             <div class="stat-value">-</div>
-            <a href="/roles" class="stat-link">Manage Roles</a>
+            <NavLink href="/roles" class="stat-link">Manage Roles</NavLink>
         </div>
 
         <div class="stat-card">
             <h3>Scopes</h3>
             <div class="stat-value">-</div>
-            <a href="/scopes" class="stat-link">Manage Scopes</a>
+            <NavLink href="/scopes" class="stat-link">Manage Scopes</NavLink>
         </div>
 
         <div class="stat-card">
             <h3>Sessions</h3>
             <div class="stat-value">-</div>
-            <a href="/sessions" class="stat-link">View Sessions</a>
+            <NavLink href="/sessions" class="stat-link">View Sessions</NavLink>
         </div>
     </div>
 
@@ -55,23 +62,23 @@ else
         <div class="action-buttons">
             @if (AdminContext.IsRootUser)
             {
-                <a href="/organizations" class="action-btn">
+                <NavLink href="/organizations" class="action-btn">
                     <span class="action-icon">+</span>
                     <span>Create Organization</span>
-                </a>
+                </NavLink>
             }
-            <a href="/roles" class="action-btn">
+            <NavLink href="/roles" class="action-btn">
                 <span class="action-icon">+</span>
                 <span>Create Role</span>
-            </a>
-            <a href="/scopes" class="action-btn">
+            </NavLink>
+            <NavLink href="/scopes" class="action-btn">
                 <span class="action-icon">+</span>
                 <span>Create Scope</span>
-            </a>
-            <a href="/sessions" class="action-btn">
+            </NavLink>
+            <NavLink href="/sessions" class="action-btn">
                 <span class="action-icon">~</span>
                 <span>View Sessions</span>
-            </a>
+            </NavLink>
         </div>
     </div>
 
@@ -79,32 +86,34 @@ else
     {
         <div class="recent-section">
             <h2>Organizations</h2>
-            <table class="simple-table">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>ID</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var org in organizations.Take(5))
-                    {
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td><strong>@org.Name</strong></td>
-                            <td><code>@org.Id</code></td>
-                            <td>
-                                <a href="/organizations/@org.Id" class="link">View</a> |
-                                <a href="/organizations/@org.Id/roles" class="link">Roles</a> |
-                                <a href="/organizations/@org.Id/scopes" class="link">Scopes</a>
-                            </td>
+                            <th>Name</th>
+                            <th>ID</th>
+                            <th>Actions</th>
                         </tr>
-                    }
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        @foreach (var org in organizations.Take(5))
+                        {
+                            <tr>
+                                <td><strong>@org.Name</strong></td>
+                                <td><code>@org.Id</code></td>
+                                <td>
+                                    <NavLink href="/organizations/@org.Id" class="link">View</NavLink> |
+                                    <NavLink href="/organizations/@org.Id/roles" class="link">Roles</NavLink> |
+                                    <NavLink href="/organizations/@org.Id/scopes" class="link">Scopes</NavLink>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
             @if (organizations.Count > 5)
             {
-                <a href="/organizations" class="view-all-link">View all @organizations.Count organizations</a>
+                <NavLink href="/organizations" class="view-all-link">View all @organizations.Count organizations</NavLink>
             }
         </div>
     }
@@ -129,4 +138,3 @@ else
         isLoading = false;
     }
 }
-

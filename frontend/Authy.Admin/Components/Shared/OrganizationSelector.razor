@@ -2,14 +2,14 @@
 @using Authy.Application.Domain.Organizations
 
 <div class="org-selector">
-    <label for="org-select">Organization:</label>
+    <label for="org-select" class="form-label">Organization</label>
     @if (IsLoading)
     {
         <span class="loading-text">Loading...</span>
     }
     else
     {
-        <select id="org-select" @onchange="OnOrganizationChanged" disabled="@(!Organizations.Any())">
+        <select id="org-select" class="form-input" @onchange="OnOrganizationChanged" disabled="@(!Organizations.Any())">
             @if (!SelectedOrganizationId.HasValue)
             {
                 <option value="">-- Select Organization --</option>
@@ -64,31 +64,3 @@
         await LoadOrganizations();
     }
 }
-
-<style>
-    .org-selector {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        margin-bottom: 1rem;
-    }
-
-    .org-selector label {
-        font-weight: 600;
-        color: #333;
-    }
-
-    .org-selector select {
-        padding: 0.5rem;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        min-width: 200px;
-    }
-
-    .loading-text {
-        color: #666;
-        font-style: italic;
-    }
-</style>
-

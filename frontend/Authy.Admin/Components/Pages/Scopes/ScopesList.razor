@@ -1,14 +1,26 @@
 @page "/scopes"
 @page "/organizations/{OrgId:guid}/scopes"
 @inject IDispatcher Dispatcher
-@inject IAdminContext AdminContext
 @inject NavigationManager Navigation
 @using Authy.Application.Domain.Organizations
 @using Authy.Application.Domain.Scopes
 
 <PageTitle>Scopes - Authy Admin</PageTitle>
 
-<h1>Scopes</h1>
+<div class="page-header">
+    <div class="page-header-row">
+        <div>
+            <h1>Scopes</h1>
+            <p class="page-subtitle">Define and manage granular permissions for your roles.</p>
+        </div>
+        @if (selectedOrgId.HasValue)
+        {
+            <div class="page-actions">
+                <NavLink href="@GetCreateScopeUrl()" class="btn btn-primary">Create Scope</NavLink>
+            </div>
+        }
+    </div>
+</div>
 
 <Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
 
@@ -21,16 +33,14 @@
 else
 {
     <div class="breadcrumb">
-        <a href="/organizations">Organizations</a> / <a href="/organizations/@OrgId">@selectedOrgName</a> / Scopes
+        <NavLink href="/organizations">Organizations</NavLink> /
+        <NavLink href="/organizations/@OrgId">@selectedOrgName</NavLink> /
+        <span>Scopes</span>
     </div>
 }
 
 @if (selectedOrgId.HasValue)
 {
-    <div class="actions-bar">
-        <a href="@GetCreateScopeUrl()" class="btn btn-primary">Create New Scope</a>
-    </div>
-
     <DataTable Items="scopes" IsLoading="isLoading" TItem="GetScopesOutput" EmptyMessage="No scopes found for this organization.">
         <HeaderTemplate>
             <th>Name</th>
@@ -59,7 +69,7 @@ else
                 }
             </td>
             <td>
-                <a href="@GetEditScopeUrl(scope.Name)" class="btn btn-sm btn-secondary">Edit</a>
+                <NavLink href="@GetEditScopeUrl(scope.Name)" class="btn btn-sm btn-secondary">Edit</NavLink>
             </td>
         </RowTemplate>
     </DataTable>
@@ -127,6 +137,11 @@ else
 
         selectedOrgId = org.Id;
         selectedOrgName = org.Name;
+        if (!OrgId.HasValue)
+        {
+            Navigation.NavigateTo($"/organizations/{selectedOrgId}/scopes", replace: true);
+            return;
+        }
         await LoadScopes();
     }
 
@@ -171,82 +186,3 @@ else
         showAlert = true;
     }
 }
-
-<style>
-    .breadcrumb {
-        margin-bottom: 1rem;
-        color: #666;
-    }
-
-    .breadcrumb a {
-        color: #007bff;
-        text-decoration: none;
-    }
-
-    .breadcrumb a:hover {
-        text-decoration: underline;
-    }
-
-    .actions-bar {
-        margin-bottom: 1rem;
-    }
-
-    .btn {
-        display: inline-block;
-        padding: 0.5rem 1rem;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        text-decoration: none;
-    }
-
-    .btn-primary {
-        background: #007bff;
-        color: white;
-    }
-
-    .btn-secondary {
-        background: #6c757d;
-        color: white;
-    }
-
-    .btn-sm {
-        padding: 0.25rem 0.5rem;
-        font-size: 0.8rem;
-    }
-
-    .role-badges {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.25rem;
-    }
-
-    .role-badge {
-        background: #d4edda;
-        color: #155724;
-        padding: 0.2rem 0.5rem;
-        border-radius: 12px;
-        font-size: 0.75rem;
-    }
-
-    .role-badge.more {
-        background: #6c757d;
-        color: white;
-    }
-
-    .no-roles {
-        color: #999;
-        font-style: italic;
-        font-size: 0.85rem;
-    }
-
-    .select-org-message {
-        color: #666;
-        text-align: center;
-        padding: 2rem;
-        background: white;
-        border-radius: 8px;
-    }
-</style>
-
