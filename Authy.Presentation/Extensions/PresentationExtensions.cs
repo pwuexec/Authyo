@@ -1,6 +1,8 @@
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Scalar.AspNetCore;
+using OpenTelemetry.Metrics;
+using Authy.Application.Shared.Diagnostics;
 using Authy.Application.Domain.Organizations;
 using Authy.Application.Domain.Roles;
 using Authy.Application.Domain.Scopes;
@@ -15,6 +17,17 @@ public static class PresentationExtensions
         services
             .AddOpenApi()
             .AddHttpContextAccessor();
+
+        services.AddOpenTelemetry()
+            .WithMetrics(metrics =>
+            {
+                metrics
+                    .AddMeter(Telemetry.ServiceName)
+                    .AddAspNetCoreInstrumentation()
+                    .AddRuntimeInstrumentation()
+                    .AddHttpClientInstrumentation()
+                    .AddPrometheusExporter();
+            });
         
         services.AddAuthentication("Bearer")
             .AddJwtBearer(options =>
@@ -49,6 +62,8 @@ public static class PresentationExtensions
         app.UseHttpsRedirection()
             .UseAuthentication()
             .UseAuthorization();
+
+        app.MapPrometheusScrapingEndpoint();
 
         app.MapPresentationEndpoints();
 

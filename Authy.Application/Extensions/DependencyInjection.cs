@@ -20,6 +20,7 @@ public static class DependencyInjection
                 .AddScoped<IAuthorizationService, AuthorizationService>()
                 .AddScoped<IJwtService, JwtService>()
                 .AddSingleton(TimeProvider.System)
+                .AddScoped(typeof(IPipelineBehavior<,>), typeof(MetricsBehavior<,>))
                 .AddScoped(typeof(IPipelineBehavior<,>), typeof(UnitOfWorkBehavior<,>))
                 .AddScoped<IDispatcher, Dispatcher>()
                 .AddHandlers(Assembly.GetExecutingAssembly());

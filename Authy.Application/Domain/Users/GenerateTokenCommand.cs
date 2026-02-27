@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Authy.Application.Domain.Users.Data;
 using Authy.Application.Shared.Abstractions;
+using Authy.Application.Shared.Diagnostics;
 
 namespace Authy.Application.Domain.Users;
 
@@ -23,8 +25,11 @@ public class GenerateTokenCommandHandler(
         var user = await userRepository.GetByIdAsync(command.UserId, cancellationToken);
         if (user == null)
         {
+            Telemetry.AuthenticationAttempts.Add(1, new TagList { { "is_success", false }, { "error", "user_not_found" } });
             return Result.Failure<RefreshTokenCommandOutput>(DomainErrors.User.NotFound);
         }
+
+        Telemetry.AuthenticationAttempts.Add(1, new TagList { { "is_success", true } });
 
         // Aggregate all scopes from all roles
         var scopes = await userRepository.GetScopesAsync(user.Id, cancellationToken);
