@@ -5,9 +5,12 @@
 @using Authy.Application.Domain.Organizations
 @rendermode InteractiveServer
 
-<PageTitle>Organizations - Authy Admin</PageTitle>
+<PageTitle>Organizations - Authy</PageTitle>
 
-<h1>Organizations</h1>
+<div class="mb-4">
+    <h1>Organizations</h1>
+    <p class="text-secondary">Manage and monitor all organizations within the system.</p>
+</div>
 
 @if (!AdminContext.IsRootUser)
 {
@@ -18,11 +21,11 @@ else
 {
     <Alert Type="@alertType" Visible="@showAlert" Message="@alertMessage" OnDismiss="@(() => showAlert = false)" />
 
-    <div class="create-form">
-        <h3>Create Organization</h3>
+    <div class="create-form mb-4">
+        <h3 class="mb-3">Create New Organization</h3>
         <EditForm Model="@this" OnValidSubmit="CreateOrganization" FormName="createOrgForm">
-            <div class="form-group">
-                <input type="text" @bind="newOrgName" placeholder="Organization name" class="form-input" />
+            <div class="flex gap-2">
+                <input type="text" @bind="newOrgName" placeholder="Organization name" class="form-input" style="max-width: 300px;" />
                 <button type="submit" class="btn btn-primary" disabled="@isCreating">
                     @if (isCreating)
                     {
@@ -44,8 +47,8 @@ else
             <th>Actions</th>
         </HeaderTemplate>
         <RowTemplate Context="org">
-            <td>@org.Name</td>
-            <td><code>@org.Id</code></td>
+            <td><span class="font-semibold text-primary">@org.Name</span></td>
+            <td><code class="text-muted small">@org.Id</code></td>
             <td>
                 <a href="/organizations/@org.Id" class="btn btn-sm btn-secondary">View Details</a>
             </td>
@@ -133,4 +136,3 @@ else
         showAlert = true;
     }
 }
-

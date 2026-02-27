@@ -4,23 +4,23 @@
 <div class="app-layout">
     <aside class="app-sidebar">
         <div class="sidebar-brand">
-            <i class="bi bi-shield-lock-fill"></i> Authy Admin
+            <i class="bi bi-shield-lock-fill"></i> Authy
         </div>
         <NavMenu />
     </aside>
 
     <header class="app-header">
         <div class="header-title">
-            <!-- Breadcrumbs or Page Title could go here -->
             Dashboard
         </div>
         <div class="header-actions">
             @if (AdminContext.IsRootUser)
             {
-                <span class="root-badge">Root User</span>
+                <span class="root-badge">Root</span>
             }
+            <ThemeToggle />
             <a href="https://github.com/pwuexec/Authyo" target="_blank" class="btn btn-sm btn-secondary">
-                <i class="bi bi-github"></i> GitHub
+                <i class="bi bi-github"></i>
             </a>
         </div>
     </header>

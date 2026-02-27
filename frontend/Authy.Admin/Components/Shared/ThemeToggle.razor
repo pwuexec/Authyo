@@ -1,0 +1,37 @@
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+
+<button class="theme-toggle" @onclick="ToggleTheme" title="Toggle Theme" type="button">
+    <i class="bi @(_isLightMode ? "bi-moon-stars-fill" : "bi-sun-fill")"></i>
+</button>
+
+@code {
+    private bool _isLightMode;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var theme = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "theme");
+            _isLightMode = theme == "light";
+            if (_isLightMode)
+            {
+                await ApplyTheme();
+                StateHasChanged();
+            }
+        }
+    }
+
+    private async Task ToggleTheme()
+    {
+        _isLightMode = !_isLightMode;
+        await ApplyTheme();
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "theme", _isLightMode ? "light" : "dark");
+    }
+
+    private async Task ApplyTheme()
+    {
+        // Use JS interop to toggle the class on the document element
+        await JSRuntime.InvokeVoidAsync("eval", $"document.documentElement.classList.{(_isLightMode ? "add" : "remove")}('light-mode')");
+    }
+}
